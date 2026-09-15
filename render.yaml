@@ -1,0 +1,40 @@
+# Infraestructura como código para Render (https://render.com/docs/blueprint-spec).
+# Crea el servicio con: New + > Blueprint > seleccionar el repo.
+services:
+  - type: web
+    name: invitador
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    # `prisma migrate deploy` (nunca `migrate dev`) aplica las migraciones pendientes
+    # contra la connection string DIRECTA de Neon durante el build.
+    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.1
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: EMAIL_SERVER
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false

@@ -1,0 +1,248 @@
+# Prompt Maestro — Plataforma de Invitaciones de Eventos ("Invitador")
+
+Usa este documento como especificación completa. Genera el proyecto paso a paso, respetando el orden de las secciones. Si tienes dudas sobre una decisión de diseño no especificada aquí, elige la opción más simple y escalable, y déjalo documentado en un comentario o en el README.
+
+## 0. Restricciones explícitas (leer primero)
+
+**IMPORTANTE — no uses servicios nativos de Firebase.** Aunque este proyecto se está desarrollando dentro de un entorno tipo Firebase Studio, la base de datos, autenticación y storage NO deben usar Firestore, Firebase Auth ni Firebase Storage. Este es un proyecto **Next.js estándar** que se desplegará en **Render**, con:
+- **Base de datos**: PostgreSQL en Neon (vía Prisma).
+- **Storage de imágenes**: Cloudinary.
+- **Autenticación**: Auth.js (NextAuth), no Firebase Auth.
+
+No propongas alternativas de Firebase "porque ya están disponibles en el entorno" — el objetivo es que el código sea portable y no dependa de Firebase para nada. Firebase Studio aquí es solo el editor/IDE, no la infraestructura del proyecto.
+
+**Acción requerida, no solo descripción**: crea los archivos y carpetas reales del proyecto (package.json, schema.prisma, componentes, rutas, etc.), no devuelvas únicamente un resumen o la copia de este documento. Si necesitas confirmar algo antes de continuar, pregunta solo lo estrictamente necesario y luego continúa creando archivos.
+
+## 1. Resumen del producto
+
+Una plataforma donde un **anfitrión** (host) crea un evento (cumpleaños, baby shower, boda, bautizo, etc.), sube fotos y una descripción, y genera un **link público único**. Cualquier persona con ese link puede:
+1. Ver la presentación del evento (nombre, tipo, fecha, fotos).
+2. Confirmar su asistencia (Sí / No / Tal vez).
+3. Agregar hasta N invitados adicionales (por defecto 3), indicando su relación con el invitado principal.
+
+El sistema debe soportar **múltiples anfitriones y múltiples eventos en paralelo** (multi-tenant), no un evento único hardcodeado.
+
+## 2. Stack tecnológico
+
+- **Framework**: Next.js 14+ (App Router, TypeScript).
+- **ORM**: Prisma.
+- **Base de datos**: PostgreSQL en **Neon** (serverless, usar `@prisma/adapter-neon` o conexión estándar con pooling — usar el connection string de tipo *pooled* que da Neon para producción).
+- **Storage de imágenes**: **Cloudinary** (subida directa desde el navegador con *unsigned upload preset* o subida firmada desde el backend — preferir firmada para controlar tamaño/formatos).
+- **Validación**: Zod.
+- **Estilos**: Tailwind CSS.
+- **Autenticación de anfitriones**: Auth.js (NextAuth) con *magic link* por email o credenciales simples. No sobre-diseñar esto al inicio.
+- **Hosting**: Render (Web Service, build con `next build`, start con `next start`).
+- **Gestión de formularios**: React Hook Form + Zod resolver.
+
+## 3. Modelo de datos (Prisma schema)
+
+```prisma
+model Host {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  events    Event[]
+}
+
+enum EventType {
+  CUMPLEANOS
+  BABY_SHOWER
+  BODA
+  BAUTIZO
+  GRADUACION
+  OTRO
+}
+
+model Event {
+  id           String    @id @default(cuid())
+  hostId       String
+  host         Host      @relation(fields: [hostId], references: [id])
+  slug         String    @unique // usado en la URL pública: /e/[slug]
+  title        String
+  type         EventType
+  customLabel  String?   // ej: "Baby Shower de Sofía" o para tipo OTRO
+  ageOrDetail  String?   // ej: "Cumple 5 años" — texto libre para flexibilidad
+  eventDate    DateTime?
+  location     String?
+  description  String?   @db.Text
+  coverImageUrl String?
+  isActive     Boolean   @default(true)
+  maxGuestsPerRsvp Int   @default(3) // escalable: configurable por evento
+  createdAt    DateTime  @default(now())
+  photos       EventPhoto[]
+  rsvps        Rsvp[]
+
+  @@index([hostId])
+}
+
+model EventPhoto {
+  id            String   @id @default(cuid())
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  cloudinaryId  String
+  url           String
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([eventId])
+}
+
+enum AttendanceStatus {
+  SI
+  NO
+  TAL_VEZ
+}
+
+model Rsvp {
+  id             String           @id @default(cuid())
+  eventId        String
+  event          Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  mainGuestName  String
+  mainGuestPhone String?
+  attendance     AttendanceStatus
+  message        String?          @db.Text
+  createdAt      DateTime         @default(now())
+  additionalGuests AdditionalGuest[]
+
+  @@index([eventId])
+}
+
+enum GuestRelation {
+  FAMILIAR
+  AMIGO
+  AMIGA
+  NOVIO
+  NOVIA
+  ESPOSO
+  ESPOSA
+  COMPANERO_TRABAJO
+  OTRO
+}
+
+model AdditionalGuest {
+  id        String        @id @default(cuid())
+  rsvpId    String
+  rsvp      Rsvp          @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  name      String
+  relation  GuestRelation
+  createdAt DateTime      @default(now())
+
+  @@index([rsvpId])
+}
+```
+
+**Nota de escalabilidad**: `maxGuestsPerRsvp` vive en `Event`, no hardcodeado en el frontend. Así, si en el futuro un evento necesita permitir 5 o 10 invitados adicionales, es un dato, no un cambio de código.
+
+## 4. Funcionalidades detalladas
+
+### 4.1 Autenticación de anfitriones
+- Login simple (magic link por email es suficiente al inicio).
+- Un anfitrión solo puede ver/editar sus propios eventos.
+
+### 4.2 Creación y edición de evento (`/dashboard/eventos/nuevo`)
+Formulario con:
+- Título del evento.
+- Tipo de evento (select: Cumpleaños, Baby Shower, Boda, Bautizo, Graduación, Otro).
+- Campo de detalle libre (`ageOrDetail`) — ej. "Cumple 30 años", visible según el tipo.
+- Fecha y hora del evento.
+- Ubicación (texto libre, opcional link de Google Maps).
+- Descripción / mensaje de invitación.
+- Subida de fotos (múltiples, via Cloudinary) + foto de portada.
+- Al guardar, generar automáticamente un `slug` único (ej. `sofia-cumple-30-x7f2`) y mostrar el link público listo para compartir por WhatsApp.
+
+### 4.3 Página pública del evento (`/e/[slug]`)
+- Mobile-first (la mayoría abrirá el link desde WhatsApp en el celular).
+- Hero con foto de portada, título, tipo/detalle, fecha, ubicación.
+- Galería de fotos (carrusel simple).
+- Meta tags Open Graph dinámicos (para que al compartir en WhatsApp se vea la foto de portada y el título).
+- Formulario de confirmación (ver 4.4).
+
+### 4.4 Confirmación de asistencia (RSVP)
+- Nombre del invitado principal.
+- Botones (no dropdown, mejor UX en mobile) para: **Sí asistiré / No podré ir / Tal vez**.
+- Campo opcional de mensaje para el anfitrión.
+- Sección "¿Vienes con alguien más?": lista dinámica de hasta `event.maxGuestsPerRsvp` invitados adicionales, cada uno con:
+  - Nombre (texto).
+  - Relación (select: Familiar, Amigo, Amiga, Novio, Novia, Esposo, Esposa, Compañero de trabajo, Otro).
+- Validar con Zod en cliente y servidor.
+- Rate limiting básico en el endpoint público (ej. por IP, con `@upstash/ratelimit` o similar) para evitar spam.
+
+### 4.5 Dashboard del anfitrión (`/dashboard/eventos/[id]`)
+- Resumen: total de confirmaciones (Sí/No/Tal vez), total de personas contando invitados adicionales.
+- Tabla de RSVPs con invitados adicionales y su relación.
+- Exportar lista a CSV.
+- Editar/desactivar evento.
+
+## 5. Integración con Cloudinary
+- Usar **subida firmada**: el backend genera una firma (`api_secret` nunca se expone al cliente).
+- Limitar formato (jpg, png, webp) y tamaño (ej. máx 5MB) desde el preset y también validando en el backend.
+- Guardar `cloudinaryId` (public_id) además del `url`, para poder borrar la imagen de Cloudinary si se elimina desde el dashboard.
+- Usar transformaciones de Cloudinary (`f_auto,q_auto,w_800`) para servir imágenes optimizadas automáticamente — clave para performance en mobile.
+
+## 6. Integración con Neon
+- Usar el connection string **pooled** de Neon (`?sslmode=require&pgbouncer=true` o el que Neon entregue para pooling) en producción, ya que Render usa conexiones serverless-friendly.
+- Ejecutar `prisma migrate deploy` como parte del *build/deploy* en Render (no `migrate dev` en producción).
+- Índices ya definidos en el schema (`hostId`, `eventId`, `rsvpId`) para que las consultas del dashboard escalen bien.
+
+## 7. Despliegue en Render
+- **Build command**: `npm install && npx prisma generate && npx prisma migrate deploy && npm run build`
+- **Start command**: `npm run start`
+- Variables de entorno necesarias (ver sección 8).
+- Configurar Render para reiniciar en caso de fallo (health check en `/api/health`).
+
+## 8. Variables de entorno (`.env`)
+
+```
+DATABASE_URL=            # connection string pooled de Neon
+DIRECT_URL=              # connection string directo de Neon (para migraciones)
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=
+EMAIL_SERVER=            # si se usa magic link
+EMAIL_FROM=
+```
+
+## 9. Estructura de carpetas sugerida
+
+```
+/app
+  /(public)/e/[slug]/page.tsx       -> página pública del evento
+  /(dashboard)/dashboard/...        -> área del anfitrión (protegida)
+  /api/rsvp/route.ts                -> POST público para confirmar asistencia
+  /api/upload/route.ts              -> firma de subida a Cloudinary
+  /api/events/route.ts              -> CRUD de eventos (protegido)
+/lib
+  prisma.ts
+  cloudinary.ts
+  validations/  (schemas Zod)
+/prisma
+  schema.prisma
+/components
+  EventHero.tsx
+  PhotoGallery.tsx
+  RsvpForm.tsx
+  GuestRow.tsx
+```
+
+## 10. Instrucciones para el agente de IA (orden de ejecución)
+
+1. Inicializa el proyecto Next.js + TypeScript + Tailwind.
+2. Instala y configura Prisma con el schema de la sección 3, apuntando a Neon.
+3. Configura Cloudinary (subida firmada) y crea el endpoint `/api/upload`.
+4. Implementa autenticación de anfitriones (Auth.js, magic link o credenciales).
+5. Construye el flujo de creación/edición de evento (`/dashboard/eventos/nuevo` y edición).
+6. Construye la página pública `/e/[slug]` con OG tags dinámicos.
+7. Construye el formulario de RSVP con invitados adicionales dinámicos (usar `useFieldArray` de React Hook Form) y el endpoint `/api/rsvp`.
+8. Construye el dashboard con listado de confirmaciones y export a CSV.
+9. Agrega rate limiting al endpoint público de RSVP.
+10. Escribe el `README.md` con instrucciones de setup local, variables de entorno y pasos de deploy en Render.
+11. Prepara el repo para deploy: `render.yaml` (opcional, Infra as Code de Render) con el build/start command de la sección 7.
+
+## 11. Ideas de escalabilidad futura (no implementar ahora, solo dejar el código preparado)
+- Múltiples idiomas (i18n) para invitaciones bilingües.
+- Plantillas visuales de invitación seleccionables por el anfitrión.
+- Recordatorios automáticos por WhatsApp/Email antes del evento.
+- Planes de pago (ej. límite de eventos gratis, plan pago para más fotos/invitados).

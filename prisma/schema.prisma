@@ -1,0 +1,127 @@
+// Schema de Prisma para la plataforma de invitaciones.
+//
+// Notas de diseño:
+// - `datasource.directUrl` apunta a la connection string DIRECTA de Neon: Prisma
+//   la usa para las migraciones (pgbouncer no soporta las sentencias DDL).
+//   `url` es la connection string pooled que usa la app en runtime.
+// - El modelo `MagicLinkToken` NO venía en la especificación original: se añadió
+//   para soportar el login por magic link con Auth.js sin obligar a modificar el
+//   modelo `Host` (no guardamos passwords).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Host {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  events    Event[]
+}
+
+enum EventType {
+  CUMPLEANOS
+  BABY_SHOWER
+  BODA
+  BAUTIZO
+  GRADUACION
+  OTRO
+}
+
+model Event {
+  id                String    @id @default(cuid())
+  hostId            String
+  host              Host      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  slug              String    @unique // usado en la URL pública: /e/[slug]
+  title             String
+  type              EventType
+  customLabel       String? // ej: "Baby Shower de Sofía" o para tipo OTRO
+  ageOrDetail       String? // ej: "Cumple 5 años" — texto libre para flexibilidad
+  eventDate         DateTime?
+  location          String?
+  description       String?   @db.Text
+  coverImageUrl     String?
+  isActive          Boolean   @default(true)
+  maxGuestsPerRsvp  Int       @default(3) // escalable: configurable por evento
+  createdAt         DateTime  @default(now())
+  photos            EventPhoto[]
+  rsvps             Rsvp[]
+
+  @@index([hostId])
+}
+
+model EventPhoto {
+  id           String   @id @default(cuid())
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  cloudinaryId String
+  url          String
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([eventId])
+}
+
+enum AttendanceStatus {
+  SI
+  NO
+  TAL_VEZ
+}
+
+model Rsvp {
+  id               String             @id @default(cuid())
+  eventId          String
+  event            Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  mainGuestName    String
+  mainGuestPhone   String?
+  attendance       AttendanceStatus
+  message          String?            @db.Text
+  createdAt        DateTime           @default(now())
+  additionalGuests AdditionalGuest[]
+
+  @@index([eventId])
+}
+
+enum GuestRelation {
+  FAMILIAR
+  AMIGO
+  AMIGA
+  NOVIO
+  NOVIA
+  ESPOSO
+  ESPOSA
+  COMPANERO_TRABAJO
+  OTRO
+}
+
+model AdditionalGuest {
+  id        String        @id @default(cuid())
+  rsvpId    String
+  rsvp      Rsvp          @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  name      String
+  relation  GuestRelation
+  createdAt DateTime      @default(now())
+
+  @@index([rsvpId])
+}
+
+/// Token de un solo uso para el login por magic link.
+/// Solo se guarda el hash SHA-256 del token; el token en claro viaja únicamente
+/// dentro del email.
+model MagicLinkToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+}
