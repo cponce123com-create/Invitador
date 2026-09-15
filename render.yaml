@@ -11,7 +11,9 @@ services:
     # `prisma db push` (contra la connection string DIRECTA de Neon) en lugar de
     # `migrate deploy`. `--accept-data-loss` es necesario para eliminar la tabla
     # `MagicLinkToken`, que ya no se usa.
-    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run build
+    # El seed de fondos demo es idempotente (upsert por id), así que puede correr
+    # en cada deploy sin duplicar filas.
+    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed:backgrounds && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     autoDeploy: true

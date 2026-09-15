@@ -9,6 +9,9 @@
 //   fila sin hash simplemente no puede iniciar sesión.
 // - `isSuperAdmin` marca la cuenta que crea y gestiona al resto de usuarios.
 //   El primer super admin se crea desde `/setup`.
+// - Los fondos (`BackgroundTemplate`) NO son fotos: se generan en código como
+//   gradientes CSS o patrones SVG (ver `lib/backgrounds.ts`). Se guardan en la
+//   base para poder agregar/quitar plantillas sin tocar código.
 
 generator client {
   provider = "prisma-client-js"
@@ -39,26 +42,58 @@ enum EventType {
   OTRO
 }
 
+/// Tipo de fondo demo: un degradado CSS o un patrón SVG repetido.
+enum BackgroundKind {
+  GRADIENT
+  PATTERN
+}
+
+/// Fondo/plantilla visual reutilizable que el anfitrión elige para la portada.
+/// Es independiente de la foto de portada del evento: si hay foto, la foto gana;
+/// si no, se usa este fondo.
+model BackgroundTemplate {
+  id          String         @id @default(cuid())
+  name        String
+  eventType   EventType? // null = sirve para cualquier tipo de evento
+  kind        BackgroundKind
+  // GRADIENT: colores hex del degradado (2 o más).
+  // PATTERN: [color base del lienzo, color del trazo del patrón].
+  colors      String[]
+  // PATTERN: nombre del patrón SVG a renderizar (ver `lib/backgrounds.ts`).
+  patternName String?
+  // Escalable: hoy todo es gratis, pero el dato queda modelado para planes de
+  // pago sin tener que migrar el schema (mismo criterio que maxGuestsPerRsvp).
+  isPremium   Boolean        @default(false)
+  order       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  events      Event[]
+
+  @@index([eventType, order])
+}
+
 model Event {
-  id                String    @id @default(cuid())
-  hostId            String
-  host              Host      @relation(fields: [hostId], references: [id], onDelete: Cascade)
-  slug              String    @unique // usado en la URL pública: /e/[slug]
-  title             String
-  type              EventType
-  customLabel       String? // ej: "Baby Shower de Sofía" o para tipo OTRO
-  ageOrDetail       String? // ej: "Cumple 5 años" — texto libre para flexibilidad
-  eventDate         DateTime?
-  location          String?
-  description       String?   @db.Text
-  coverImageUrl     String?
-  isActive          Boolean   @default(true)
-  maxGuestsPerRsvp  Int       @default(3) // escalable: configurable por evento
-  createdAt         DateTime  @default(now())
-  photos            EventPhoto[]
-  rsvps             Rsvp[]
+  id                   String              @id @default(cuid())
+  hostId               String
+  host                 Host                @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  slug                 String              @unique // usado en la URL pública: /e/[slug]
+  title                String
+  type                 EventType
+  customLabel          String? // ej: "Baby Shower de Sofía" o para tipo OTRO
+  ageOrDetail          String? // ej: "Cumple 5 años" — texto libre para flexibilidad
+  eventDate            DateTime?
+  location             String?
+  description          String?             @db.Text
+  coverImageUrl        String?
+  backgroundTemplateId String?
+  backgroundTemplate   BackgroundTemplate? @relation(fields: [backgroundTemplateId], references: [id], onDelete: SetNull)
+  isActive             Boolean             @default(true)
+  maxGuestsPerRsvp     Int                 @default(3) // escalable: configurable por evento
+  createdAt            DateTime            @default(now())
+  photos               EventPhoto[]
+  rsvps                Rsvp[]
 
   @@index([hostId])
+  @@index([backgroundTemplateId])
 }
 
 model EventPhoto {
@@ -80,14 +115,14 @@ enum AttendanceStatus {
 }
 
 model Rsvp {
-  id               String             @id @default(cuid())
+  id               String            @id @default(cuid())
   eventId          String
-  event            Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event            Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   mainGuestName    String
   mainGuestPhone   String?
   attendance       AttendanceStatus
-  message          String?            @db.Text
-  createdAt        DateTime           @default(now())
+  message          String?           @db.Text
+  createdAt        DateTime          @default(now())
   additionalGuests AdditionalGuest[]
 
   @@index([eventId])

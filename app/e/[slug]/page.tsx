@@ -65,6 +65,7 @@ export default async function PublicEventPage({ params }: PageProps) {
         dateLabel={dateLabel}
         location={event.location}
         coverImageUrl={event.coverImageUrl}
+        backgroundTemplate={event.backgroundTemplate}
       />
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">

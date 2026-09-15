@@ -66,4 +66,28 @@ describe("eventFormSchema", () => {
       eventFormSchema.safeParse({ ...eventBase, maxGuestsPerRsvp: 999 }).success,
     ).toBe(false);
   });
+
+  it("acepta un id de fondo", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        backgroundTemplateId: "bg-brand-aurora",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("acepta la cadena vacía y la ausencia del fondo", () => {
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, backgroundTemplateId: "" })
+        .success,
+    ).toBe(true);
+    expect(eventFormSchema.safeParse(eventBase).success).toBe(true);
+  });
+
+  it("rechaza un id de fondo en blanco", () => {
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, backgroundTemplateId: "   " })
+        .success,
+    ).toBe(false);
+  });
 });

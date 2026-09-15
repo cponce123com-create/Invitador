@@ -18,6 +18,7 @@ const initialValues: EventFormValues = {
   location: "",
   description: "",
   coverImageUrl: "",
+  backgroundTemplateId: "",
   maxGuestsPerRsvp: DEFAULT_MAX_GUESTS_PER_RSVP,
   isActive: true,
   photos: [],

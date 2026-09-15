@@ -39,6 +39,10 @@ indicando, si quiere, hasta N acompañantes con su relación.
 - **Dashboard del evento** en `/dashboard/eventos/[id]`: resumen de
   confirmaciones y total de personas, tabla de RSVPs, **export a CSV**, publicar
   o desactivar la invitación y eliminar el evento.
+- **Fondos demo** en el formulario del evento: una galería de plantillas
+  (gradientes y patrones SVG **generados en código**, sin subir imágenes) con
+  preview en vivo del Hero. Si el evento tiene foto de portada, la foto manda;
+  si no, se usa el fondo elegido o el degradado por defecto.
 - **Rate limiting** en el endpoint público de RSVP y en el login (Upstash Redis
   si está configurado; limitador en memoria como respaldo).
 
@@ -61,7 +65,10 @@ cp .env.example .env
 # 3. Aplicar el schema a la base de datos
 npm run db:push        # o: npm run db:migrate  (crea una migración)
 
-# 4. Arrancar en desarrollo
+# 4. Sembrar el catálogo de fondos demo (idempotente)
+npm run db:seed:backgrounds
+
+# 5. Arrancar en desarrollo
 npm run dev            # http://localhost:3000
 ```
 
@@ -98,6 +105,7 @@ administrador. Después entra a **Usuarios** en el panel para crear el resto.
 | `npm run db:migrate` | Crea y aplica una migración en desarrollo.          |
 | `npm run db:deploy`  | Aplica migraciones pendientes (producción).         |
 | `npm run db:push`    | Sincroniza el schema sin migración (prototipado).   |
+| `npm run db:seed:backgrounds` | Siembra el catálogo de fondos demo (idempotente). |
 | `npm run db:studio`  | Prisma Studio.                                      |
 
 ## Deploy en Render
@@ -105,7 +113,7 @@ administrador. Después entra a **Usuarios** en el panel para crear el resto.
 El archivo [`render.yaml`](./render.yaml) describe el servicio. Los comandos son:
 
 - **Build command**
-  `npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run build`
+  `npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed:backgrounds && npm run build`
 - **Start command**: `npm run start`
 - **Health check**: `GET /api/health`
 
@@ -115,6 +123,11 @@ El archivo [`render.yaml`](./render.yaml) describe el servicio. Los comandos son
 > ejecuta `npm run db:migrate -- --name init` en local, sube la carpeta
 > `prisma/migrations/` y cambia el comando del build por
 > `npx prisma migrate deploy`.
+>
+> `npm run db:seed:backgrounds` siembra las plantillas de fondos demo. Es
+> idempotente (upsert por id), así que puede correr en cada deploy sin duplicar
+> filas. El runner (`tsx`) está en `devDependencies`, que Render instala durante
+> el build.
 
 Configura las variables de entorno de la tabla anterior en el panel de Render.
 En producción usa siempre la connection string **pooled** de Neon en
@@ -163,10 +176,34 @@ tests/                             Tests de la lógica pura
   `scrypt$<sal>$<hash>`. La sesión es un JWT firmado, así que no hay tabla de
   sesiones ni adapter. El alta de cuentas está cerrada: solo un super admin
   puede crear usuarios.
+- **Fondos demo generados en código**: las plantillas de `BackgroundTemplate` no
+  son imágenes. `lib/backgrounds.ts` las traduce a un `style` de CSS (degradado
+  o patrón SVG en data URI), así que la galería es instantánea, liviana y no
+  depende de Cloudinary. Prioridad de la portada: foto (`coverImageUrl`) →
+  fondo elegido → degradado por defecto (los eventos ya existentes no cambian).
+
+## Fondos demo: cómo agregar uno nuevo
+
+No hay que tocar la UI ni subir imágenes. Lo más simple es agregar un preset a
+`BACKGROUND_PRESETS` (`lib/background-presets.ts`) y correr
+`npm run db:seed:backgrounds`; también sirve insertar una fila directamente en
+`BackgroundTemplate` (Prisma Studio, SQL, etc.).
+
+| Campo         | Qué es                                                                  |
+| ------------- | ----------------------------------------------------------------------- |
+| `name`        | Nombre que ve el anfitrión en la galería.                               |
+| `eventType`   | `CUMPLEANOS`…`OTRO`, o `null` para que sirva a cualquier evento.        |
+| `kind`        | `GRADIENT` (degradado CSS) o `PATTERN` (patrón SVG repetido).           |
+| `colors`      | `GRADIENT`: 2 o más colores hex. `PATTERN`: `[base, color del trazo]`.  |
+| `patternName` | Solo `PATTERN`: `dots`, `waves`, `confetti` o `stripes`.                |
+| `order`       | Posición en la galería (menor primero).                                 |
+| `isPremium`   | Reservado para planes de pago; hoy todo es gratis.                      |
 
 ## Escalabilidad futura (no implementado)
 
 - i18n para invitaciones bilingües.
-- Plantillas visuales seleccionables por el anfitrión.
+- Subida de fondos personalizados por el anfitrión (hoy solo plantillas demo).
+- Fondos premium / de pago (el campo `isPremium` ya está modelado).
+- Editor de colores custom por el anfitrión.
 - Recordatorios automáticos por WhatsApp/email antes del evento.
 - Planes de pago (límite de eventos gratis, plan pago con más fotos/invitados).

@@ -5,14 +5,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import {
+  BackgroundPicker,
+  useBackgroundTemplates,
+} from "@/components/BackgroundPicker";
+import { EventHero } from "@/components/EventHero";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import {
   EVENT_DETAIL_PLACEHOLDER,
   EVENT_TYPES,
   EVENT_TYPE_LABELS,
+  getEventTypeLabel,
   MAX_EVENT_PHOTOS,
   MAX_GUESTS_PER_RSVP_LIMIT,
 } from "@/lib/constants";
+import { formatEventDate, parseWallClockInput } from "@/lib/format";
 import {
   cardClass,
   errorClass,
@@ -60,9 +67,23 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
     defaultValues,
   });
 
+  const { templates, isLoading: backgroundsLoading, error: backgroundsError } =
+    useBackgroundTemplates();
+
   const selectedType = watch("type");
   const coverImageUrl = watch("coverImageUrl") ?? "";
   const isEdit = mode === "edit";
+
+  // Vista previa en vivo del Hero público, alimentada con los valores actuales
+  // del formulario (sin guardar).
+  const backgroundTemplateId = watch("backgroundTemplateId") ?? "";
+  const selectedTemplate =
+    templates.find((template) => template.id === backgroundTemplateId) ?? null;
+  const previewTitle = (watch("title") ?? "").trim();
+  const previewCustomLabel = watch("customLabel") ?? "";
+  const previewDateLabel = formatEventDate(
+    parseWallClockInput(watch("eventDate") ?? ""),
+  );
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(null);
@@ -75,6 +96,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
       location: values.location ?? "",
       description: values.description ?? "",
       coverImageUrl: values.coverImageUrl ?? "",
+      backgroundTemplateId: values.backgroundTemplateId ?? "",
       photos: values.photos ?? [],
     };
 
@@ -261,6 +283,49 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
         {errors.photos ? (
           <p className={errorClass}>{errors.photos.message}</p>
         ) : null}
+      </section>
+
+      <section className={`${cardClass} space-y-4`}>
+        <div>
+          <h2 className="text-base font-bold text-slate-900">
+            Fondo de la portada
+          </h2>
+          <p className={helpClass}>
+            Elige una plantilla para cuando el evento no tenga foto de portada.
+            Son fondos generados: no subes ninguna imagen.
+          </p>
+        </div>
+
+        <Controller
+          control={control}
+          name="backgroundTemplateId"
+          render={({ field }) => (
+            <BackgroundPicker
+              eventType={selectedType}
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              templates={templates}
+              isLoading={backgroundsLoading}
+              error={backgroundsError}
+            />
+          )}
+        />
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-slate-700">Vista previa</h3>
+          <div className="overflow-hidden rounded-2xl border border-slate-200">
+            <EventHero
+              title={previewTitle || "Título del evento"}
+              type={selectedType}
+              typeLabel={getEventTypeLabel(selectedType, previewCustomLabel)}
+              detail={watch("ageOrDetail") ?? ""}
+              dateLabel={previewDateLabel}
+              location={watch("location") ?? ""}
+              coverImageUrl={coverImageUrl}
+              backgroundTemplate={selectedTemplate}
+            />
+          </div>
+        </div>
       </section>
 
       <section className={`${cardClass} space-y-5`}>

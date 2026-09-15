@@ -50,6 +50,13 @@ export const eventFormSchema = z.object({
   coverImageUrl: z
     .union([z.string().trim().url("La URL de la portada no es válida"), z.literal("")])
     .optional(),
+  // Fondo demo elegido (`BackgroundTemplate.id`). Cadena vacía = sin fondo.
+  backgroundTemplateId: z
+    .union([
+      z.string().trim().min(1, "El fondo seleccionado no es válido"),
+      z.literal(""),
+    ])
+    .optional(),
   maxGuestsPerRsvp: z
     .number({ invalid_type_error: "Ingresa un número" })
     .int("Debe ser un número entero")

@@ -1,4 +1,8 @@
 import Image from "next/image";
+import {
+  backgroundStyleFor,
+  type BackgroundTemplateLike,
+} from "@/lib/backgrounds";
 import { EVENT_TYPE_EMOJI, type EventTypeValue } from "@/lib/constants";
 import { optimizedImageUrl } from "@/lib/images";
 
@@ -10,9 +14,19 @@ type Props = {
   dateLabel?: string | null;
   location?: string | null;
   coverImageUrl?: string | null;
+  /** Fondo demo elegido por el anfitrión. Se ignora si hay foto de portada. */
+  backgroundTemplate?: BackgroundTemplateLike | null;
 };
 
-/** Portada de la invitación pública: foto, tipo de evento, fecha y lugar. */
+/**
+ * Portada de la invitación pública: foto, tipo de evento, fecha y lugar.
+ *
+ * Prioridad del fondo:
+ *  1. foto de portada (`coverImageUrl`) + overlay oscuro (comportamiento previo);
+ *  2. fondo demo (`backgroundTemplate`) + un overlay suave, para que el texto
+ *     blanco siga siendo legible sobre paletas claras (baby shower, boda…);
+ *  3. degradado por defecto, para no romper los eventos ya existentes.
+ */
 export function EventHero({
   title,
   type,
@@ -21,6 +35,7 @@ export function EventHero({
   dateLabel,
   location,
   coverImageUrl,
+  backgroundTemplate,
 }: Props) {
   return (
     <section className="relative isolate overflow-hidden bg-slate-900">
@@ -37,7 +52,15 @@ export function EventHero({
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-slate-900/25" />
         </>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-600 via-brand-500 to-fuchsia-500" />
+        <>
+          <div
+            className="absolute inset-0"
+            style={backgroundStyleFor(backgroundTemplate)}
+          />
+          {backgroundTemplate ? (
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/35 to-slate-950/10" />
+          ) : null}
+        </>
       )}
 
       <div className="relative mx-auto flex min-h-[21rem] max-w-3xl flex-col justify-end gap-3 px-5 py-10 text-white sm:min-h-[26rem] sm:py-14">

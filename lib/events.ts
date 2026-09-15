@@ -38,6 +38,7 @@ export function toEventScalarData(values: EventFormValues) {
     location: emptyToNull(values.location),
     description: emptyToNull(values.description),
     coverImageUrl: emptyToNull(values.coverImageUrl),
+    backgroundTemplateId: emptyToNull(values.backgroundTemplateId),
     maxGuestsPerRsvp: values.maxGuestsPerRsvp,
     ...(values.isActive === undefined ? {} : { isActive: values.isActive }),
   };
@@ -116,6 +117,7 @@ export async function deleteEventPhotosFromCloudinary(cloudinaryIds: string[]): 
 }
 
 export const eventDetailInclude = {
+  backgroundTemplate: true,
   photos: { orderBy: { order: "asc" } },
   rsvps: {
     orderBy: { createdAt: "desc" },
@@ -136,6 +138,7 @@ export async function getPublicEventBySlug(slug: string) {
   return prisma.event.findFirst({
     where: { slug, isActive: true },
     include: {
+      backgroundTemplate: true,
       photos: { orderBy: { order: "asc" } },
       host: { select: { name: true } },
     },
