@@ -110,14 +110,17 @@ export const DEFAULT_MAX_GUESTS_PER_RSVP = 3;
 export const MAX_GUESTS_PER_RSVP_LIMIT = 20;
 export const MAX_EVENT_PHOTOS = 30;
 
-/** id del proveedor de Auth.js que consume el token del magic link. */
-export const MAGIC_LINK_PROVIDER_ID = "magic-link";
+/** id del proveedor de Auth.js basado en email + contraseña. */
+export const CREDENTIALS_PROVIDER_ID = "credentials";
+
+/** Longitud mínima exigida a las contraseñas. */
+export const PASSWORD_MIN_LENGTH = 8;
 
 /** Límite del endpoint público de RSVP (por IP). */
 export const RSVP_RATE_LIMIT = { limit: 8, windowMs: 60_000 } as const;
 
-/** Límite del endpoint de solicitud de magic link (por IP). */
-export const MAGIC_LINK_RATE_LIMIT = { limit: 5, windowMs: 60_000 } as const;
+/** Límite de intentos de login (por email). */
+export const LOGIN_RATE_LIMIT = { limit: 5, windowMs: 60_000 } as const;
 
 export function getEventTypeLabel(
   type: EventTypeValue,

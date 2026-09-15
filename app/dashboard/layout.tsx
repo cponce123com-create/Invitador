@@ -20,12 +20,22 @@ export default async function DashboardLayout({
     <div className="min-h-dvh bg-slate-50">
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <Link
-            href="/dashboard"
-            className="text-lg font-black tracking-tight text-brand-700"
-          >
-            Invitador
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="text-lg font-black tracking-tight text-brand-700"
+            >
+              Invitador
+            </Link>
+            {host.isSuperAdmin ? (
+              <Link
+                href="/dashboard/usuarios"
+                className="text-sm font-medium text-slate-600 transition hover:text-brand-700"
+              >
+                Usuarios
+              </Link>
+            ) : null}
+          </div>
           <div className="flex items-center gap-3">
             <span className="hidden max-w-[16rem] truncate text-sm text-slate-500 sm:inline">
               {host.name ?? host.email}

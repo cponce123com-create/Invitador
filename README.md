@@ -14,7 +14,7 @@ indicando, si quiere, hasta N acompañantes con su relación.
 | ORM           | Prisma                                                |
 | Base de datos | PostgreSQL en **Neon** (connection string *pooled*)   |
 | Imágenes      | **Cloudinary** (subida firmada desde el navegador)    |
-| Auth          | Auth.js (NextAuth) con **magic link** por email       |
+| Auth          | Auth.js (NextAuth) con **email + contraseña**         |
 | Validación    | Zod + React Hook Form                                 |
 | Estilos       | Tailwind CSS                                          |
 | Deploy        | **Render** (Web Service)                              |
@@ -25,8 +25,10 @@ indicando, si quiere, hasta N acompañantes con su relación.
 
 ## Funcionalidades
 
-- **Anfitriones** se autentican con un magic link (sin contraseñas). Un anfitrión
-  solo ve y edita sus propios eventos.
+- **Alta cerrada de cuentas**: nadie se registra por su cuenta. El primer
+  **super admin** se crea en `/setup` y desde `/dashboard/usuarios` da de alta
+  al resto de usuarios con email y contraseña. Un anfitrión solo ve y edita sus
+  propios eventos.
 - **Crear/editar evento** en `/dashboard/eventos/nuevo` y `.../[id]/editar`:
   título, tipo, detalle libre, fecha y hora, ubicación, descripción, fotos
   (con portada) y el tope de acompañantes por confirmación.
@@ -37,8 +39,8 @@ indicando, si quiere, hasta N acompañantes con su relación.
 - **Dashboard del evento** en `/dashboard/eventos/[id]`: resumen de
   confirmaciones y total de personas, tabla de RSVPs, **export a CSV**, publicar
   o desactivar la invitación y eliminar el evento.
-- **Rate limiting** en el endpoint público de RSVP (Upstash Redis si está
-  configurado; limitador en memoria como respaldo).
+- **Rate limiting** en el endpoint público de RSVP y en el login (Upstash Redis
+  si está configurado; limitador en memoria como respaldo).
 
 ## Requisitos
 
@@ -63,11 +65,11 @@ npm run db:push        # o: npm run db:migrate  (crea una migración)
 npm run dev            # http://localhost:3000
 ```
 
-### Probar el login sin proveedor de email
+### Crear la primera cuenta
 
-Si `EMAIL_SERVER` está vacío, el magic link **se imprime en la consola del
-servidor** en lugar de enviarse por correo. Pide el enlace en `/login` y copia la
-URL que aparece en la terminal.
+La app no tiene registro público. La primera vez abre `/login`: si todavía no
+existe ningún super admin te redirige a `/setup`, donde crearás tu cuenta de
+administrador. Después entra a **Usuarios** en el panel para crear el resto.
 
 ## Variables de entorno
 
@@ -80,8 +82,6 @@ URL que aparece en la terminal.
 | `CLOUDINARY_API_SECRET`  | API secret de Cloudinary (nunca se expone al cliente).                 |
 | `NEXTAUTH_SECRET`        | Secreto de Auth.js. Genera uno con `openssl rand -base64 32`.          |
 | `NEXTAUTH_URL`           | URL base de la app (ej. `https://mi-app.onrender.com`).                |
-| `EMAIL_SERVER`           | URI SMTP (ej. `smtp://user:pass@smtp.proveedor.com:587`). Opcional.    |
-| `EMAIL_FROM`             | Remitente de los emails de acceso.                                     |
 | `UPSTASH_REDIS_REST_URL` | URL de Upstash Redis para rate limiting distribuido. **Opcional**.     |
 | `UPSTASH_REDIS_REST_TOKEN` | Token de Upstash Redis. **Opcional**.                                |
 
@@ -105,9 +105,16 @@ URL que aparece en la terminal.
 El archivo [`render.yaml`](./render.yaml) describe el servicio. Los comandos son:
 
 - **Build command**
-  `npm install && npx prisma generate && npx prisma migrate deploy && npm run build`
+  `npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run build`
 - **Start command**: `npm run start`
 - **Health check**: `GET /api/health`
+
+> El proyecto no incluye `prisma/migrations/`, por eso el build usa
+> `prisma db push` (sincroniza el schema directamente) en lugar de
+> `prisma migrate deploy`. Si más adelante quieres migraciones versionadas,
+> ejecuta `npm run db:migrate -- --name init` en local, sube la carpeta
+> `prisma/migrations/` y cambia el comando del build por
+> `npx prisma migrate deploy`.
 
 Configura las variables de entorno de la tabla anterior en el panel de Render.
 En producción usa siempre la connection string **pooled** de Neon en
@@ -119,14 +126,17 @@ En producción usa siempre la connection string **pooled** de Neon en
 app/
   layout.tsx                       Layout raíz (fuentes, metadata global)
   page.tsx                         Landing pública
-  login/                           Solicitud y verificación del magic link
+  setup/                           Alta del primer super admin (solo una vez)
+  login/                           Acceso con email + contraseña
   dashboard/                       Área privada del anfitrión
     page.tsx                       Listado de eventos
+    usuarios/                      Gestión de cuentas (solo super admin)
     eventos/nuevo| [id]| [id]/editar
   e/[slug]/page.tsx                Invitación pública (OG tags dinámicos)
   api/
     auth/[...nextauth]             Auth.js
-    auth/request-link              Solicitud de magic link
+    setup                          Crea el primer super admin
+    admin/users                    Alta y listado de usuarios (solo super admin)
     events, events/[id], status, rsvps/export
     rsvp                           Confirmación pública (rate limited)
     upload                         Firma de subida a Cloudinary
@@ -148,8 +158,11 @@ tests/                             Tests de la lógica pura
   adicionales, no hay que tocar código.
 - **Subida firmada**: el `api_secret` de Cloudinary nunca llega al navegador;
   el backend genera una firma válida solo para una carpeta y un timestamp.
-- **Auth sin contraseñas**: el modelo `Host` no guarda passwords. El magic link
-  se guarda hasheado (SHA-256) y es de un solo uso, con caducidad de 15 minutos.
+- **Auth con contraseñas**: `Host.passwordHash` guarda el resultado de `scrypt`
+  (`node:crypto`, sin dependencias externas) con el formato
+  `scrypt$<sal>$<hash>`. La sesión es un JWT firmado, así que no hay tabla de
+  sesiones ni adapter. El alta de cuentas está cerrada: solo un super admin
+  puede crear usuarios.
 
 ## Escalabilidad futura (no implementado)
 

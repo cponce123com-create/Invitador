@@ -4,9 +4,11 @@
 // - `datasource.directUrl` apunta a la connection string DIRECTA de Neon: Prisma
 //   la usa para las migraciones (pgbouncer no soporta las sentencias DDL).
 //   `url` es la connection string pooled que usa la app en runtime.
-// - El modelo `MagicLinkToken` NO venía en la especificación original: se añadió
-//   para soportar el login por magic link con Auth.js sin obligar a modificar el
-//   modelo `Host` (no guardamos passwords).
+// - La autenticación es con email + contraseña. `passwordHash` es opcional para
+//   no romper filas creadas antes de habilitar el login por credenciales: una
+//   fila sin hash simplemente no puede iniciar sesión.
+// - `isSuperAdmin` marca la cuenta que crea y gestiona al resto de usuarios.
+//   El primer super admin se crea desde `/setup`.
 
 generator client {
   provider = "prisma-client-js"
@@ -19,11 +21,13 @@ datasource db {
 }
 
 model Host {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  events    Event[]
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  isSuperAdmin Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  events       Event[]
 }
 
 enum EventType {
@@ -110,18 +114,4 @@ model AdditionalGuest {
   createdAt DateTime      @default(now())
 
   @@index([rsvpId])
-}
-
-/// Token de un solo uso para el login por magic link.
-/// Solo se guarda el hash SHA-256 del token; el token en claro viaja únicamente
-/// dentro del email.
-model MagicLinkToken {
-  id        String    @id @default(cuid())
-  tokenHash String    @unique
-  email     String
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([email])
 }

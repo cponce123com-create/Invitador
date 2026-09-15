@@ -1,4 +1,4 @@
-import { RSVP_RATE_LIMIT } from "@/lib/constants";
+import { LOGIN_RATE_LIMIT, RSVP_RATE_LIMIT } from "@/lib/constants";
 
 export type RateLimitResult = {
   success: boolean;
@@ -72,7 +72,11 @@ export const rsvpLimiter = new InMemoryRateLimiter(
   RSVP_RATE_LIMIT.windowMs,
 );
 
-export const magicLinkLimiter = new InMemoryRateLimiter(5, 60_000);
+/** Intentos de login por email. Se consulta desde `lib/auth.ts`. */
+export const loginLimiter = new InMemoryRateLimiter(
+  LOGIN_RATE_LIMIT.limit,
+  LOGIN_RATE_LIMIT.windowMs,
+);
 
 type UpstashLimiter = {
   limit: (key: string) => Promise<RateLimitResult>;

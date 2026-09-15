@@ -1,93 +1,66 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { CREDENTIALS_PROVIDER_ID } from "@/lib/constants";
 import {
   errorClass,
   inputClass,
   labelClass,
   primaryButtonClass,
-  secondaryButtonClass,
 } from "@/lib/ui";
-import {
-  requestMagicLinkSchema,
-  type RequestMagicLinkValues,
-} from "@/lib/validations/auth";
+import { loginSchema, type LoginValues } from "@/lib/validations/auth";
 
 export function LoginForm() {
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, isSubmitting },
-  } = useForm<RequestMagicLinkValues>({
-    resolver: zodResolver(requestMagicLinkSchema),
-    defaultValues: { email: "" },
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(null);
-    try {
-      const response = await fetch("/api/auth/request-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      const payload = await response.json().catch(() => null);
 
-      if (!response.ok) {
-        setServerError(payload?.error ?? "No pudimos enviar el enlace. Intenta de nuevo.");
+    try {
+      const result = await signIn(CREDENTIALS_PROVIDER_ID, {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      });
+
+      // No se distingue entre email inexistente y contraseña incorrecta: es la
+      // misma respuesta para no dar pistas a quien intenta adivinar cuentas.
+      if (!result || result.error) {
+        setServerError("Email o contraseña incorrectos.");
         return;
       }
 
-      setSentTo(values.email);
+      router.replace("/dashboard");
+      router.refresh();
     } catch {
       setServerError("Revisa tu conexión e intenta de nuevo.");
     }
   });
 
-  if (sentTo) {
-    return (
-      <div className="space-y-4 text-center">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-3xl">
-          📬
-        </div>
-        <h2 className="text-xl font-bold text-slate-900">Revisa tu correo</h2>
-        <p className="text-sm text-slate-600">
-          Enviamos un enlace de acceso a <strong className="text-slate-900">{sentTo}</strong>.
-          Caduca en 15 minutos y solo funciona una vez.
-        </p>
-        <p className="text-xs text-slate-500">
-          ¿No llegó? Revisa la carpeta de spam o vuelve a intentarlo.
-        </p>
-        <button
-          type="button"
-          className={secondaryButtonClass}
-          onClick={() => {
-            setSentTo(null);
-            reset({ email: sentTo });
-          }}
-        >
-          Usar otro email
-        </button>
-      </div>
-    );
-  }
-
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
       <div>
         <label htmlFor="email" className={labelClass}>
-          Tu email
+          Email
         </label>
         <input
           id="email"
           type="email"
-          autoComplete="email"
+          autoComplete="username"
           inputMode="email"
           placeholder="tu@email.com"
           className={inputClass}
@@ -97,16 +70,33 @@ export function LoginForm() {
         {errors.email ? <p className={errorClass}>{errors.email.message}</p> : null}
       </div>
 
+      <div>
+        <label htmlFor="password" className={labelClass}>
+          Contraseña
+        </label>
+        <input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          className={inputClass}
+          aria-invalid={Boolean(errors.password)}
+          {...register("password")}
+        />
+        {errors.password ? <p className={errorClass}>{errors.password.message}</p> : null}
+      </div>
+
       {serverError ? (
-        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{serverError}</p>
+        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {serverError}
+        </p>
       ) : null}
 
       <button type="submit" className={`${primaryButtonClass} w-full`} disabled={isSubmitting}>
-        {isSubmitting ? "Enviando…" : "Enviarme el enlace de acceso"}
+        {isSubmitting ? "Entrando…" : "Entrar"}
       </button>
 
       <p className="text-center text-xs text-slate-500">
-        Sin contraseñas. Te enviamos un enlace de un solo uso.
+        ¿No tienes cuenta? Pídesela al administrador.
       </p>
     </form>
   );

@@ -1,22 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LoginForm } from "@/components/LoginForm";
+import { SetupForm } from "@/components/SetupForm";
 import { prisma } from "@/lib/prisma";
-import { getCurrentHost } from "@/lib/session";
 import { cardClass } from "@/lib/ui";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Entrar" };
+export const metadata: Metadata = { title: "Crear administrador" };
 
-export default async function LoginPage() {
-  // Si ya hay sesión, no tiene sentido volver a pedir credenciales.
-  const host = await getCurrentHost();
-  if (host) redirect("/dashboard");
-
-  // Sin ningún super admin todavía, lo primero es crearlo.
+/**
+ * Instalación inicial: crea el primer super admin. En cuanto existe uno, esta
+ * página deja de estar disponible y manda al login.
+ */
+export default async function SetupPage() {
   const superAdmins = await prisma.host.count({ where: { isSuperAdmin: true } });
-  if (superAdmins === 0) redirect("/setup");
+  if (superAdmins > 0) redirect("/login");
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-5 py-12">
@@ -29,16 +27,22 @@ export default async function LoginPage() {
 
       <div className={cardClass}>
         <div className="mb-5 space-y-1">
-          <h1 className="text-xl font-bold text-slate-900">Entra a tu panel</h1>
+          <h1 className="text-xl font-bold text-slate-900">
+            Crea tu cuenta de administrador
+          </h1>
           <p className="text-sm text-slate-500">
-            Usa el email y la contraseña que te dio el administrador.
+            Esta pantalla solo aparece una vez. Con esta cuenta crearás al resto
+            de usuarios.
           </p>
         </div>
-        <LoginForm />
+        <SetupForm />
       </div>
 
       <p className="text-center text-xs text-slate-500">
-        Al entrar podrás crear y gestionar tus eventos.
+        Ya tengo cuenta.{" "}
+        <Link href="/login" className="font-semibold text-brand-700">
+          Entrar
+        </Link>
       </p>
     </main>
   );
