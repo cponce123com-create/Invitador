@@ -5,6 +5,21 @@
 /** Carpeta raíz dentro de la cuenta de Cloudinary. */
 export const CLOUDINARY_FOLDER_ROOT = "invitador";
 
+/** Carpeta donde se guardan los comprobantes de regalo de un evento. */
+export function giftAssetFolder(eventId: string): string {
+  return `${CLOUDINARY_FOLDER_ROOT}/regalos/${eventId}`;
+}
+
+/**
+ * Comprueba que un `public_id` de Cloudinary venga de la carpeta de regalos del
+ * evento: así nadie puede enlazar el asset de otro evento (o de otra cuenta)
+ * como si fuera su comprobante.
+ */
+export function isGiftAssetId(eventId: string, cloudinaryId: string): boolean {
+  const prefix = `${giftAssetFolder(eventId)}/`;
+  return cloudinaryId.startsWith(prefix) && cloudinaryId.length > prefix.length;
+}
+
 /** 5 MB: suficiente para fotos de celular y mantiene la página liviana. */
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 

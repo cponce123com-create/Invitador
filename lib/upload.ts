@@ -62,8 +62,17 @@ export function validateImageFile(
 async function postSignatureRequest(
   endpoint: string,
   fallbackMessage: string,
+  body?: Record<string, unknown>,
 ): Promise<UploadSignature> {
-  const response = await fetch(endpoint, { method: "POST" });
+  const response = await fetch(endpoint, {
+    method: "POST",
+    ...(body
+      ? {
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      : {}),
+  });
   const data = (await response.json().catch(() => null)) as
     | (UploadSignature & { error?: string })
     | null;
@@ -80,6 +89,20 @@ export function requestUploadSignature(): Promise<UploadSignature> {
   return postSignatureRequest(
     "/api/upload",
     "No pudimos preparar la subida de fotos.",
+  );
+}
+
+/**
+ * Firma para un invitado que sube el comprobante de su regalo. No hay sesión:
+ * la firma queda acotada a la carpeta de ese evento.
+ */
+export function requestGiftUploadSignature(
+  eventId: string,
+): Promise<UploadSignature> {
+  return postSignatureRequest(
+    "/api/upload/gift",
+    "No pudimos preparar la subida del comprobante.",
+    { eventId },
   );
 }
 

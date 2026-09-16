@@ -122,6 +122,13 @@ export const PASSWORD_MIN_LENGTH = 8;
 /** Límite del endpoint público de RSVP (por IP). */
 export const RSVP_RATE_LIMIT = { limit: 8, windowMs: 60_000 } as const;
 
+/**
+ * Límite de la subida pública de comprobantes de regalo (por IP). Es más
+ * holgado que el de RSVP porque un invitado puede equivocarse de captura y
+ * reintentar, pero corta el abuso desde una sola conexión.
+ */
+export const GIFT_RATE_LIMIT = { limit: 10, windowMs: 10 * 60_000 } as const;
+
 /** Límite de intentos de login (por email). */
 export const LOGIN_RATE_LIMIT = { limit: 5, windowMs: 60_000 } as const;
 

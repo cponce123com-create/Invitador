@@ -114,8 +114,12 @@ export async function syncEventPhotos(
   }
 }
 
-/** Borra de Cloudinary todas las fotos de un evento (al eliminar el evento). */
-export async function deleteEventPhotosFromCloudinary(cloudinaryIds: string[]): Promise<void> {
+/**
+ * Borra de Cloudinary una lista de assets del evento (fotos de la galería,
+ * comprobantes de regalo…). Nunca lanza: el asset externo no debe bloquear ni
+ * revertir un borrado ya confirmado en la base de datos.
+ */
+export async function deleteCloudinaryAssets(cloudinaryIds: string[]): Promise<void> {
   if (cloudinaryIds.length === 0) return;
   await Promise.all(cloudinaryIds.map((id) => deleteCloudinaryImage(id)));
 }
@@ -127,6 +131,7 @@ export const eventDetailInclude = {
     orderBy: { createdAt: "desc" },
     include: { additionalGuests: { orderBy: { createdAt: "asc" } } },
   },
+  giftProofs: { orderBy: { createdAt: "desc" } },
 } as const;
 
 /** Evento de un anfitrión concreto (o `null` si no es suyo). */

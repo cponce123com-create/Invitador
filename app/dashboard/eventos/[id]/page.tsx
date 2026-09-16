@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { EventStatusToggle } from "@/components/EventStatusToggle";
+import { GiftProofList } from "@/components/GiftProofList";
 import { RsvpTable } from "@/components/RsvpTable";
 import { ShareLink } from "@/components/ShareLink";
 import { StatsCards } from "@/components/StatsCards";

@@ -102,6 +102,7 @@ model Event {
   createdAt            DateTime            @default(now())
   photos               EventPhoto[]
   rsvps                Rsvp[]
+  giftProofs           GiftProof[]
 
   @@index([hostId])
   @@index([backgroundTemplateId])
@@ -114,6 +115,22 @@ model EventPhoto {
   cloudinaryId String
   url          String
   order        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([eventId])
+}
+
+/// Comprobante de regalo que sube un invitado desde la invitación pública.
+/// No requiere sesión: el endpoint que lo crea limita por IP y el anfitrión
+/// puede borrar los que sobren desde su panel.
+model GiftProof {
+  id           String   @id @default(cuid())
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  senderName   String
+  note         String?
+  cloudinaryId String
+  url          String
   createdAt    DateTime @default(now())
 
   @@index([eventId])

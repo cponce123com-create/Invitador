@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EventHero } from "@/components/EventHero";
 import { GiftCard } from "@/components/invitation/GiftCard";
+import { GiftProofForm } from "@/components/invitation/GiftProofForm";
 import { InvitationShell } from "@/components/invitation/InvitationShell";
 import { PhotoWall } from "@/components/invitation/PhotoWall";
 import { Reveal } from "@/components/invitation/Reveal";
@@ -125,6 +126,14 @@ export default async function PublicEventPage({ params }: PageProps) {
               giftQrUrl={event.giftQrUrl}
               giftMessage={event.giftMessage}
             />
+          </Reveal>
+        ) : null}
+
+        {/* El comprobante pertenece a la mesa de regalos: sin regalos no hay nada
+            que comprobar, así que el formulario solo aparece con la sección. */}
+        {event.giftQrUrl ? (
+          <Reveal>
+            <GiftProofForm eventId={event.id} />
           </Reveal>
         ) : null}
 

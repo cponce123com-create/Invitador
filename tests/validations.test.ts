@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { MAX_GIFT_MESSAGE } from "@/lib/constants";
 import { eventFormSchema } from "@/lib/validations/event";
+import {
+  giftProofFormSchema,
+  giftProofRequestSchema,
+} from "@/lib/validations/gift-proof";
 import { createRsvpSchema } from "@/lib/validations/rsvp";
 
 const rsvpBase = {
@@ -176,6 +180,63 @@ describe("eventFormSchema", () => {
   it("rechaza un QR de regalos que no es una URL", () => {
     expect(
       eventFormSchema.safeParse({ ...eventBase, giftQrUrl: "qr.png" }).success,
+    ).toBe(false);
+  });
+});
+
+describe("giftProofFormSchema", () => {
+  it("acepta el nombre con una nota opcional", () => {
+    expect(giftProofFormSchema.safeParse({ senderName: "Ana" }).success).toBe(true);
+    expect(
+      giftProofFormSchema.safeParse({ senderName: "Ana", note: "Ahí va mi aporte" })
+        .success,
+    ).toBe(true);
+  });
+
+  it("recorta el nombre y exige al menos dos caracteres", () => {
+    const parsed = giftProofFormSchema.safeParse({ senderName: "  Ana  " });
+    expect(parsed.success && parsed.data.senderName).toBe("Ana");
+    expect(giftProofFormSchema.safeParse({ senderName: " A " }).success).toBe(false);
+  });
+
+  it("limita la longitud del nombre y de la nota", () => {
+    expect(
+      giftProofFormSchema.safeParse({ senderName: "a".repeat(80) }).success,
+    ).toBe(true);
+    expect(
+      giftProofFormSchema.safeParse({ senderName: "a".repeat(81) }).success,
+    ).toBe(false);
+    expect(
+      giftProofFormSchema.safeParse({
+        senderName: "Ana",
+        note: "a".repeat(MAX_GIFT_MESSAGE + 1),
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("giftProofRequestSchema", () => {
+  const base = {
+    senderName: "Ana",
+    note: "",
+    eventId: "ev1",
+    url: "https://res.cloudinary.com/demo/image/upload/v1/recibo.jpg",
+    cloudinaryId: "invitador/regalos/ev1/abc123",
+  };
+
+  it("acepta el payload completo del invitado", () => {
+    expect(giftProofRequestSchema.safeParse(base).success).toBe(true);
+  });
+
+  it("exige el evento, la URL y el asset del comprobante", () => {
+    expect(
+      giftProofRequestSchema.safeParse({ ...base, eventId: "" }).success,
+    ).toBe(false);
+    expect(
+      giftProofRequestSchema.safeParse({ ...base, cloudinaryId: "" }).success,
+    ).toBe(false);
+    expect(
+      giftProofRequestSchema.safeParse({ ...base, url: "recibo.jpg" }).success,
     ).toBe(false);
   });
 });

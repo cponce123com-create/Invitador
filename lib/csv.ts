@@ -61,9 +61,40 @@ export function rsvpsToCsv(rsvps: readonly CsvRsvp[]): string {
   return `${CSV_BOM}${toCsv(rows)}`;
 }
 
-/** Nombre de archivo seguro para la descarga del CSV. */
-export function buildCsvFileName(slug: string): string {
+export type CsvGiftProof = {
+  senderName: string;
+  note: string | null;
+  url: string;
+  createdAt: Date;
+};
+
+export const GIFT_PROOF_CSV_HEADERS = [
+  "Nombre",
+  "Nota",
+  "Comprobante",
+  "Subido el",
+] as const;
+
+/** Serializa los comprobantes de regalo de un evento a CSV. */
+export function giftProofsToCsv(proofs: readonly CsvGiftProof[]): string {
+  const rows: unknown[][] = [Array.from(GIFT_PROOF_CSV_HEADERS)];
+  for (const proof of proofs) {
+    rows.push([
+      proof.senderName,
+      proof.note ?? "",
+      proof.url,
+      formatShortDateTime(proof.createdAt),
+    ]);
+  }
+  return `${CSV_BOM}${toCsv(rows)}`;
+}
+
+/**
+ * Nombre de archivo seguro para la descarga del CSV.
+ * El prefijo distingue las listas de un mismo evento (invitados o regalos).
+ */
+export function buildCsvFileName(slug: string, prefix = "invitados"): string {
   const safeSlug = slug.replace(/[^a-z0-9-]/gi, "-").toLowerCase();
   const stamp = new Date().toISOString().slice(0, 10);
-  return `invitados-${safeSlug}-${stamp}.csv`;
+  return `${prefix}-${safeSlug}-${stamp}.csv`;
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
 import {
-  deleteEventPhotosFromCloudinary,
+  deleteCloudinaryAssets,
   getHostEvent,
   syncEventPhotos,
   toEventScalarData,
@@ -58,12 +58,15 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   const existing = await getHostEvent(host.id, params.id);
   if (!existing) return jsonError("Evento no encontrado", 404);
 
-  const cloudinaryIds = existing.photos.map((photo) => photo.cloudinaryId);
+  const cloudinaryIds = [
+    ...existing.photos.map((photo) => photo.cloudinaryId),
+    ...existing.giftProofs.map((proof) => proof.cloudinaryId),
+  ];
 
-  // Primero la base de datos (el borrado en cascada elimina fotos y RSVPs).
+  // Primero la base de datos (el borrado en cascada elimina fotos, RSVPs y comprobantes).
   await prisma.event.delete({ where: { id: existing.id } });
   // Después los assets externos, que no deben bloquear ni revertir el borrado.
-  await deleteEventPhotosFromCloudinary(cloudinaryIds);
+  await deleteCloudinaryAssets(cloudinaryIds);
 
   return NextResponse.json({ ok: true });
 }
