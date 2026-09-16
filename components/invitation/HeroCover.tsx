@@ -33,10 +33,16 @@ export function HeroCover({ src, priority = false }: HeroCoverProps) {
     if (!layer || prefersReducedMotion()) return;
 
     let raf = 0;
+    /** Último desplazamiento aplicado; -1 fuerza el primero. */
+    let applied = -1;
 
     const apply = () => {
       raf = 0;
       const offset = Math.min(window.scrollY * PARALLAX_FACTOR, MAX_OFFSET);
+      // Una vez topado, el scroll deja de cambiar el desplazamiento: reescribir
+      // el mismo `transform` solo cuesta trabajo de composición.
+      if (offset === applied) return;
+      applied = offset;
       layer.style.transform = `translate3d(0, ${offset}px, 0) scale(${HEADROOM_SCALE})`;
     };
 

@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { InvitationTheme } from "@/lib/invitation-theme";
 import { ConfettiProvider } from "./ConfettiProvider";
+import { FullScreenLayerProvider } from "./overlay-layer";
 import { OpeningOverlay } from "./OpeningOverlay";
 import { ParticleCanvas } from "./ParticleCanvas";
 
@@ -23,24 +24,31 @@ export function InvitationShell({ theme, children }: InvitationShellProps) {
 
   return (
     <ConfettiProvider kind={theme.particleKind} palette={theme.palette}>
-      <div className="relative min-h-dvh">
-        <div
-          aria-hidden
-          className="pointer-events-none fixed inset-0 animate-gradient-pan opacity-[0.16]"
-          style={{
-            backgroundImage: `linear-gradient(135deg, ${theme.palette.join(", ")})`,
-            backgroundSize: "200% 200%",
-          }}
-        />
+      <FullScreenLayerProvider>
+        <div className="relative min-h-dvh">
+          <div
+            aria-hidden
+            className="pointer-events-none fixed inset-0 overflow-hidden opacity-[0.16]"
+          >
+            {/* Capa sobredimensionada: el barrido se anima con `transform` sobre
+                ella, de modo que la GPU compone y el degradado no se repinta. */}
+            <div
+              className="absolute inset-[-25%] animate-gradient-pan will-change-transform"
+              style={{
+                backgroundImage: `linear-gradient(135deg, ${theme.palette.join(", ")})`,
+              }}
+            />
+          </div>
 
-        <ParticleCanvas kind={theme.particleKind} palette={theme.palette} />
+          <ParticleCanvas kind={theme.particleKind} palette={theme.palette} />
 
-        <div className="relative z-10 pb-16">{children}</div>
+          <div className="relative z-10 pb-16">{children}</div>
 
-        {opened ? null : (
-          <OpeningOverlay theme={theme} onOpen={() => setOpened(true)} />
-        )}
-      </div>
+          {opened ? null : (
+            <OpeningOverlay theme={theme} onOpen={() => setOpened(true)} />
+          )}
+        </div>
+      </FullScreenLayerProvider>
     </ConfettiProvider>
   );
 }

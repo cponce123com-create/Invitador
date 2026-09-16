@@ -55,10 +55,13 @@ const config: Config = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
-        // Desplazamiento del degradado del fondo temático.
+        // Barrido del degradado del fondo temático. Se anima con `transform` (no
+        // con `background-position`) para que la composición quede en la GPU: un
+        // `background-position` sobre una capa a pantalla completa obliga a
+        // repintarla en cada fotograma.
         "gradient-pan": {
-          "0%, 100%": { backgroundPosition: "0% 50%" },
-          "50%": { backgroundPosition: "100% 50%" },
+          "0%, 100%": { transform: "translate3d(-12%, 0, 0) scale(1.1)" },
+          "50%": { transform: "translate3d(12%, 0, 0) scale(1.1)" },
         },
         // Entrada de las secciones al aparecer en pantalla.
         "reveal-up": {

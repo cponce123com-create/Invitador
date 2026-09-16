@@ -5,6 +5,7 @@ import type { InvitationTheme } from "@/lib/invitation-theme";
 import { cn } from "@/lib/ui";
 import { useConfetti } from "./ConfettiProvider";
 import { prefersReducedMotion } from "./motion";
+import { useFullScreenLayer } from "./overlay-layer";
 
 export type OpeningOverlayProps = {
   theme: InvitationTheme;
@@ -24,10 +25,14 @@ export function OpeningOverlay({ theme, onOpen }: OpeningOverlayProps) {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [closing, setClosing] = useState(false);
 
+  // Mientras la cortina está puesta, el fondo ambiental no tiene nada que pintar.
+  useFullScreenLayer();
+
   useEffect(() => {
     buttonRef.current?.focus();
 
-    // Mientras la cortina está puesta no tiene sentido desplazar la invitación.
+    // Refuerzo para el escritorio; en iOS Safari el scroll de fondo se bloquea
+    // de verdad con `touch-none` en la raíz, no con `overflow: hidden`.
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -48,20 +53,27 @@ export function OpeningOverlay({ theme, onOpen }: OpeningOverlayProps) {
       aria-modal="true"
       aria-label="Abrir la invitación"
       className={cn(
-        "fixed inset-0 z-[60] grid place-items-center overflow-hidden px-6 text-center transition-opacity duration-500",
+        "fixed inset-0 z-[60] grid touch-none place-items-center overflow-hidden overscroll-contain px-6 text-center transition-opacity duration-500",
         closing ? "pointer-events-none opacity-0" : "opacity-100",
       )}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
 
+      {/* Halo estático: un `blur` grande sobre esta área obligaba a recomponer el
+          filtro en cada fotograma; el degradado radial da la misma presencia sin
+          filtrar nada. */}
       <div
         aria-hidden
-        className="absolute h-80 w-80 rounded-full opacity-30 blur-3xl"
-        style={{ backgroundColor: theme.accent }}
+        className="absolute h-80 w-80 rounded-full opacity-30"
+        style={{
+          backgroundImage: `radial-gradient(circle, ${theme.accent} 0%, transparent 70%)`,
+        }}
       />
 
       <div className="relative flex flex-col items-center gap-6">
-        <div className="grid h-24 w-24 animate-float place-items-center rounded-full border border-white/20 bg-white/10 text-5xl shadow-lg backdrop-blur">
+        {/* Sin `backdrop-blur`: el sello flota y el filtro se recompondría en cada
+            fotograma de la animación. */}
+        <div className="grid h-24 w-24 animate-float place-items-center rounded-full border border-white/20 bg-white/10 text-5xl shadow-lg">
           <span aria-hidden>{theme.emoji}</span>
         </div>
 

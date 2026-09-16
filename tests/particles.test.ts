@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   PARTICLE_KINDS,
-  ambientParticleCount,
-  burstParticleCount,
   createAmbientParticle,
   createBurstParticle,
   isOffscreen,
@@ -170,19 +168,5 @@ describe("recycleAmbientParticle", () => {
     particle.y = -100;
     recycleAmbientParticle(particle, BOUNDS, seededRng(15), PALETTE);
     expect(particle.y).toBeGreaterThan(BOUNDS.height);
-  });
-});
-
-describe("densidad de partículas", () => {
-  it("mantiene más partículas cuanto más ancha es la pantalla", () => {
-    expect(ambientParticleCount(360)).toBeLessThan(ambientParticleCount(800));
-    expect(ambientParticleCount(800)).toBeLessThan(ambientParticleCount(1440));
-    expect(burstParticleCount(360)).toBeLessThan(burstParticleCount(800));
-    expect(burstParticleCount(800)).toBeLessThan(burstParticleCount(1440));
-  });
-
-  it("devuelve cantidades positivas", () => {
-    expect(ambientParticleCount(0)).toBeGreaterThan(0);
-    expect(burstParticleCount(0)).toBeGreaterThan(0);
   });
 });

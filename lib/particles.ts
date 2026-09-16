@@ -240,20 +240,3 @@ export function recycleAmbientParticle(
   particle.opacity = particle.baseOpacity;
   return particle;
 }
-
-/**
- * Cuántas partículas ambientales mantener según el ancho: en móvil menos, para
- * no castigar la batería ni el frame rate.
- */
-export function ambientParticleCount(width: number): number {
-  if (width < 480) return 16;
-  if (width < 1024) return 26;
-  return 38;
-}
-
-/** Tamaño de una ráfaga de celebración según el ancho. */
-export function burstParticleCount(width: number): number {
-  if (width < 480) return 40;
-  if (width < 1024) return 70;
-  return 110;
-}

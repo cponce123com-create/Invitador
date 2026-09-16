@@ -18,6 +18,8 @@ export type PhotoWallProps = {
 const ROTATIONS = [-2.6, 1.8, -1.4, 2.4, -2, 1.2];
 /** A partir de aquí se deja de flotar: demasiadas animaciones a la vez en móvil. */
 const FLOAT_LIMIT = 6;
+/** Tope del escalonado de entrada: con muchas fotos, la última no debe esperar. */
+const MAX_STAGGER_STEPS = 5;
 
 /**
  * Muro de polaroids: se adapta a cualquier cantidad de fotos con columnas CSS,
@@ -36,7 +38,7 @@ export function PhotoWall({ photos, title }: PhotoWallProps) {
         {photos.map((photo, index) => (
           <Reveal
             key={photo.id}
-            delay={index * 70}
+            delay={Math.min(index, MAX_STAGGER_STEPS) * 70}
             className="mb-4 break-inside-avoid"
           >
             <div

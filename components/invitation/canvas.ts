@@ -5,15 +5,17 @@ import type { Particle } from "@/lib/particles";
 
 /**
  * Ajusta el bitmap del canvas al tamaño CSS y a la densidad de píxeles de la
- * pantalla (limitada a 2x para no castigar móviles con pantallas 3x).
+ * pantalla, limitada por `maxPixelRatio` (el presupuesto lo decide
+ * `lib/render-budget.ts`: 1.5 en móvil, 2 en el resto).
  * Devuelve el contexto ya escalado, o `null` si el canvas no es 2D.
  */
 export function prepareCanvas(
   canvas: HTMLCanvasElement,
   width: number,
   height: number,
+  maxPixelRatio = 2,
 ): CanvasRenderingContext2D | null {
-  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  const ratio = Math.min(window.devicePixelRatio || 1, maxPixelRatio);
   canvas.width = Math.max(1, Math.round(width * ratio));
   canvas.height = Math.max(1, Math.round(height * ratio));
 

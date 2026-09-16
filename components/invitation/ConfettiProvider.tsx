@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react";
 import {
-  burstParticleCount,
   createBurstParticle,
   isOffscreen,
   isParticleDead,
@@ -19,6 +18,7 @@ import {
   type Particle,
   type ParticleKind,
 } from "@/lib/particles";
+import { burstParticleCount, maxCanvasPixelRatio } from "@/lib/render-budget";
 import { drawParticles, prepareCanvas } from "./canvas";
 import { prefersReducedMotion } from "./motion";
 
@@ -75,7 +75,7 @@ export function ConfettiProvider({
       const width = canvas.clientWidth || window.innerWidth;
       const height = canvas.clientHeight || window.innerHeight;
       bounds = { width, height };
-      ctx = prepareCanvas(canvas, width, height);
+      ctx = prepareCanvas(canvas, width, height, maxCanvasPixelRatio(width));
     };
 
     const frame = (now: number) => {
