@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { QR_QUIET_ZONE, createQrMatrix, qrPathData, qrSvgSize, type QrMatrix } from "@/lib/qr";
 import { cn, errorClass, helpClass, secondaryButtonClass } from "@/lib/ui";
 
 type Props = {
-  url: string;
-  title: string;
   slug: string;
+  title: string;
   className?: string;
 };
 
@@ -102,16 +101,25 @@ function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob | null> {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
-/** QR del enlace público con el nombre del evento, listo para descargar. */
-export function EventQr({ url, title, slug, className }: Props) {
+/** QR del enlace público del evento, con el nombre debajo y descarga en PNG. */
+export function EventQr({ slug, title, className }: Props) {
+  const [origin, setOrigin] = useState("");
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const matrix = useMemo(() => createQrMatrix(url), [url]);
-  const path = useMemo(() => qrPathData(matrix), [matrix]);
-  const viewBox = qrSvgSize(matrix);
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  // El enlace absoluto solo existe en el navegador. Mientras no se conozca se
+  // deja el hueco del símbolo: un QR del enlace relativo llevaría a otro sitio.
+  const url = origin ? `${origin}/e/${slug}` : "";
+  const matrix = useMemo(() => (url ? createQrMatrix(url) : null), [url]);
+  const path = useMemo(() => (matrix ? qrPathData(matrix) : ""), [matrix]);
+  const viewBox = matrix ? qrSvgSize(matrix) : 0;
 
   async function downloadQr() {
+    if (!matrix) return;
     setBusy(true);
     setFailed(false);
     try {
@@ -136,15 +144,19 @@ export function EventQr({ url, title, slug, className }: Props) {
   return (
     <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-start", className)}>
       <div className="w-fit rounded-xl border border-slate-200 bg-white p-3">
-        <svg
-          viewBox={`0 0 ${viewBox} ${viewBox}`}
-          role="img"
-          aria-label={`Código QR de la invitación de ${title}`}
-          shapeRendering="crispEdges"
-          className="h-40 w-40 text-slate-900"
-        >
-          <path d={path} fill="currentColor" />
-        </svg>
+        {matrix ? (
+          <svg
+            viewBox={`0 0 ${viewBox} ${viewBox}`}
+            role="img"
+            aria-label={`Código QR de la invitación de ${title}`}
+            shapeRendering="crispEdges"
+            className="h-40 w-40 text-slate-900"
+          >
+            <path d={path} fill="currentColor" />
+          </svg>
+        ) : (
+          <div className="h-40 w-40 animate-pulse rounded-lg bg-slate-100" aria-hidden />
+        )}
         <p className="mt-2 line-clamp-2 max-w-40 text-center text-xs font-semibold leading-snug text-slate-700">
           {title}
         </p>
@@ -155,7 +167,7 @@ export function EventQr({ url, title, slug, className }: Props) {
           type="button"
           onClick={() => void downloadQr()}
           className={secondaryButtonClass}
-          disabled={busy}
+          disabled={busy || !matrix}
         >
           {busy ? "Preparando…" : "Descargar QR"}
         </button>

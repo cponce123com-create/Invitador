@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
+import { EventQr } from "@/components/EventQr";
 import { EventStatusToggle } from "@/components/EventStatusToggle";
 import { GiftProofList } from "@/components/GiftProofList";
 import { RsvpTable } from "@/components/RsvpTable";
@@ -71,9 +72,12 @@ export default async function EventDashboardPage({ params }: PageProps) {
       <section className={cardClass}>
         <h2 className="text-base font-bold text-slate-900">Link público</h2>
         <p className="mb-3 mt-1 text-sm text-slate-500">
-          Compártelo por WhatsApp para recibir confirmaciones.
+          Compártelo por WhatsApp o descarga el código QR para imprimirlo.
         </p>
-        <ShareLink slug={event.slug} title={event.title} />
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          <ShareLink slug={event.slug} title={event.title} className="min-w-0 lg:flex-1" />
+          <EventQr slug={event.slug} title={event.title} />
+        </div>
       </section>
 
       <section className={cardClass}>
