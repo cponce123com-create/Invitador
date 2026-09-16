@@ -102,6 +102,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
       coverImageUrl: values.coverImageUrl ?? "",
       giftQrUrl: values.giftQrUrl ?? "",
       giftMessage: values.giftMessage ?? "",
+      dressCodeImageUrl: values.dressCodeImageUrl ?? "",
       backgroundTemplateId: values.backgroundTemplateId ?? "",
       photos: values.photos ?? [],
     };
@@ -296,6 +297,36 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             <p role="alert" className={errorClass}>{errors.description.message}</p>
           ) : null}
         </div>
+      </section>
+
+      <section className={`${cardClass} space-y-5`}>
+        <div>
+          <h2 className="text-base font-bold text-slate-900">
+            Código de vestimenta{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </h2>
+          <p className={helpClass}>
+            Sube una foto que muestre cómo se deben vestir tus invitados. Si no
+            subes ninguna, la invitación no muestra esta tarjeta.
+          </p>
+        </div>
+
+        <Controller
+          control={control}
+          name="dressCodeImageUrl"
+          render={({ field }) => (
+            <SingleImageUploader
+              id="dressCodeImageUrl"
+              label="Foto del código de vestimenta"
+              help="Una sola imagen. En la invitación se ve ampliable."
+              value={field.value ?? ""}
+              onChange={field.onChange}
+            />
+          )}
+        />
+        {errors.dressCodeImageUrl ? (
+          <p role="alert" className={errorClass}>{errors.dressCodeImageUrl.message}</p>
+        ) : null}
       </section>
 
       <section className={`${cardClass} space-y-3`}>

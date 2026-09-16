@@ -95,6 +95,10 @@ model Event {
   giftQrUrl            String?
   /// Texto que acompaña al QR: llave, número de cuenta, etc.
   giftMessage          String?             @db.Text
+  /// Foto que indica el código de vestimenta que se espera en el evento
+  /// (opcional). Igual que la foto del lugar, es una casilla aparte: no gasta
+  /// el cupo de la galería ni se borra al editar las fotos.
+  dressCodeImageUrl    String?
   backgroundTemplateId String?
   backgroundTemplate   BackgroundTemplate? @relation(fields: [backgroundTemplateId], references: [id], onDelete: SetNull)
   isActive             Boolean             @default(true)

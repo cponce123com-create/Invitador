@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EventHero } from "@/components/EventHero";
+import { DressCodeCard } from "@/components/invitation/DressCodeCard";
 import { FooterRibbon } from "@/components/invitation/FooterRibbon";
 import { GiftCard } from "@/components/invitation/GiftCard";
 import { GiftProofForm } from "@/components/invitation/GiftProofForm";
@@ -101,6 +102,15 @@ export default async function PublicEventPage({ params }: PageProps) {
                 {event.description}
               </p>
             </section>
+          </Reveal>
+        ) : null}
+
+        {event.dressCodeImageUrl ? (
+          <Reveal>
+            <DressCodeCard
+              eventTitle={event.title}
+              dressCodeImageUrl={event.dressCodeImageUrl}
+            />
           </Reveal>
         ) : null}
 

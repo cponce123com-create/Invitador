@@ -76,6 +76,11 @@ export const eventFormSchema = z.object({
     MAX_GIFT_MESSAGE,
     `Máximo ${MAX_GIFT_MESSAGE} caracteres`,
   ),
+  // Foto del código de vestimenta: si queda vacía, la invitación no muestra la
+  // tarjeta.
+  dressCodeImageUrl: optionalUrl(
+    "La URL de la foto del código de vestimenta no es válida",
+  ),
   // Fondo demo elegido (`BackgroundTemplate.id`). Cadena vacía = sin fondo.
   backgroundTemplateId: z
     .union([

@@ -32,6 +32,9 @@ indicando, si quiere, hasta N acompañantes con su relación.
 - **Crear/editar evento** en `/dashboard/eventos/nuevo` y `.../[id]/editar`:
   título, tipo, detalle libre, fecha y hora, ubicación, descripción, fotos
   (con portada) y el tope de acompañantes por confirmación.
+- **Código de vestimenta** (opcional): una foto de referencia que el anfitrión
+  sube como casilla aparte. En la invitación se muestra como una tarjeta
+  ampliable; sin foto, no se renderiza.
 - **Página pública** en `/e/[slug]`, *mobile-first*: una experiencia animada
   (cortina de apertura, confeti y partículas temáticas según el tipo de evento,
   saludo escrito a máquina, Ken Burns + parallax en la portada y un muro de

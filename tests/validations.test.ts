@@ -221,6 +221,33 @@ describe("eventFormSchema", () => {
       eventFormSchema.safeParse({ ...eventBase, giftQrUrl: "qr.png" }).success,
     ).toBe(false);
   });
+
+  it("acepta la foto del código de vestimenta", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        dressCodeImageUrl:
+          "https://res.cloudinary.com/demo/image/upload/vestimenta.jpg",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("acepta la foto de vestimenta vacía o ausente", () => {
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, dressCodeImageUrl: "" })
+        .success,
+    ).toBe(true);
+    expect(eventFormSchema.safeParse(eventBase).success).toBe(true);
+  });
+
+  it("rechaza una foto de vestimenta que no es una URL", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        dressCodeImageUrl: "traje.png",
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe("giftProofFormSchema", () => {
@@ -302,6 +329,10 @@ describe("URLs con esquema peligroso", () => {
       ).toBe(false);
       expect(
         eventFormSchema.safeParse({ ...eventBase, giftQrUrl: url }).success,
+      ).toBe(false);
+      expect(
+        eventFormSchema.safeParse({ ...eventBase, dressCodeImageUrl: url })
+          .success,
       ).toBe(false);
     }
   });

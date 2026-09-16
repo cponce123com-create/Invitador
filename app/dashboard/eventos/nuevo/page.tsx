@@ -22,6 +22,7 @@ const initialValues: EventFormValues = {
   coverImageUrl: "",
   giftQrUrl: "",
   giftMessage: "",
+  dressCodeImageUrl: "",
   backgroundTemplateId: "",
   maxGuestsPerRsvp: DEFAULT_MAX_GUESTS_PER_RSVP,
   isActive: true,

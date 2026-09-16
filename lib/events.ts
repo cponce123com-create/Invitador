@@ -44,6 +44,7 @@ export function toEventScalarData(values: EventFormValues) {
     coverImageUrl: emptyToNull(values.coverImageUrl),
     giftQrUrl: emptyToNull(values.giftQrUrl),
     giftMessage: emptyToNull(values.giftMessage),
+    dressCodeImageUrl: emptyToNull(values.dressCodeImageUrl),
     backgroundTemplateId: emptyToNull(values.backgroundTemplateId),
     maxGuestsPerRsvp: values.maxGuestsPerRsvp,
     ...(values.isActive === undefined ? {} : { isActive: values.isActive }),

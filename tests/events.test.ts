@@ -86,6 +86,20 @@ describe("toEventScalarData", () => {
     );
     expect(data.giftMessage).toBe("Llave Bre-B 300 123 4567");
   });
+
+  it("guarda null sin foto de vestimenta y la conserva cuando se sube", () => {
+    expect(toEventScalarData(formValues).dressCodeImageUrl).toBeNull();
+
+    const data = toEventScalarData({
+      ...formValues,
+      dressCodeImageUrl:
+        " https://res.cloudinary.com/demo/image/upload/vestimenta.jpg ",
+    });
+
+    expect(data.dressCodeImageUrl).toBe(
+      "https://res.cloudinary.com/demo/image/upload/vestimenta.jpg",
+    );
+  });
 });
 
 describe("computeEventStats", () => {
