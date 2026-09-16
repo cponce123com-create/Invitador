@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EventHero } from "@/components/EventHero";
-import { PhotoGallery } from "@/components/PhotoGallery";
+import { InvitationShell } from "@/components/invitation/InvitationShell";
+import { PhotoWall } from "@/components/invitation/PhotoWall";
+import { Reveal } from "@/components/invitation/Reveal";
 import { RsvpForm } from "@/components/RsvpForm";
 import { getEventTypeLabel } from "@/lib/constants";
 import { getPublicEventBySlug } from "@/lib/events";
 import { formatEventDate } from "@/lib/format";
 import { socialImageUrl } from "@/lib/images";
+import { getInvitationTheme } from "@/lib/invitation-theme";
 import { cardClass } from "@/lib/ui";
 
 export const dynamic = "force-dynamic";
@@ -48,15 +51,20 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * Invitación pública. `InvitationShell` aporta la capa animada (partículas,
+ * confeti, cortina de apertura) y las secciones se revelan al hacer scroll.
+ */
 export default async function PublicEventPage({ params }: PageProps) {
   const event = await getPublicEventBySlug(params.slug);
   if (!event) notFound();
 
   const typeLabel = getEventTypeLabel(event.type, event.customLabel);
   const dateLabel = formatEventDate(event.eventDate);
+  const theme = getInvitationTheme(event.type);
 
   return (
-    <div className="min-h-dvh bg-slate-50 pb-16">
+    <InvitationShell theme={theme}>
       <EventHero
         title={event.title}
         type={event.type}
@@ -66,33 +74,41 @@ export default async function PublicEventPage({ params }: PageProps) {
         location={event.location}
         coverImageUrl={event.coverImageUrl}
         backgroundTemplate={event.backgroundTemplate}
+        animate
+        greeting={theme.greeting}
       />
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
         {event.description ? (
-          <section className={cardClass}>
-            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
-              {event.description}
-            </p>
-          </section>
+          <Reveal>
+            <section className={cardClass}>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                {event.description}
+              </p>
+            </section>
+          </Reveal>
         ) : null}
 
         {event.photos.length > 0 ? (
-          <section className={`${cardClass} space-y-3`}>
-            <h2 className="text-base font-bold text-slate-900">Fotos</h2>
-            <PhotoGallery photos={event.photos} title={event.title} />
-          </section>
+          <Reveal>
+            <section className={`${cardClass} space-y-4`}>
+              <h2 className="text-base font-bold text-slate-900">Fotos</h2>
+              <PhotoWall photos={event.photos} title={event.title} />
+            </section>
+          </Reveal>
         ) : null}
 
-        <RsvpForm
-          eventId={event.id}
-          maxGuestsPerRsvp={event.maxGuestsPerRsvp}
-        />
+        <Reveal delay={80}>
+          <RsvpForm
+            eventId={event.id}
+            maxGuestsPerRsvp={event.maxGuestsPerRsvp}
+          />
+        </Reveal>
 
         <footer className="pt-2 text-center text-xs text-slate-400">
           Invitación creada con Invitador
         </footer>
       </div>
-    </div>
+    </InvitationShell>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { AttendanceSelector } from "@/components/AttendanceSelector";
 import { GuestRow } from "@/components/GuestRow";
+import { useConfetti } from "@/components/invitation/ConfettiProvider";
 import { ATTENDANCE_LABELS } from "@/lib/constants";
 import {
   cardClass,
@@ -35,8 +36,17 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
   // El esquema depende del tope de acompañantes configurado en el evento.
   const schema = useMemo(() => createRsvpSchema(maxGuestsPerRsvp), [maxGuestsPerRsvp]);
 
+  const confetti = useConfetti();
+  const successRef = useRef<HTMLDivElement | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<RsvpFormValues["attendance"] | null>(null);
+
+  // Fuera de la invitación animada `burstFrom` no hace nada, así que este efecto
+  // no necesita saber si hay confeti disponible.
+  useEffect(() => {
+    if (!confirmed) return;
+    confetti.burstFrom(successRef.current);
+  }, [confirmed, confetti]);
 
   const {
     register,
@@ -86,7 +96,7 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
 
   if (confirmed) {
     return (
-      <div className={`${cardClass} space-y-4 text-center`}>
+      <div ref={successRef} className={`${cardClass} space-y-4 text-center`}>
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-3xl">
           ✅
         </div>

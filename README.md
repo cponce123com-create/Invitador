@@ -32,8 +32,11 @@ indicando, si quiere, hasta N acompañantes con su relación.
 - **Crear/editar evento** en `/dashboard/eventos/nuevo` y `.../[id]/editar`:
   título, tipo, detalle libre, fecha y hora, ubicación, descripción, fotos
   (con portada) y el tope de acompañantes por confirmación.
-- **Página pública** en `/e/[slug]`, *mobile-first*, con portada, galería y
-  meta tags Open Graph dinámicos para que el link se vea bien en WhatsApp.
+- **Página pública** en `/e/[slug]`, *mobile-first*: una experiencia animada
+  (cortina de apertura, confeti y partículas temáticas según el tipo de evento,
+  saludo escrito a máquina, Ken Burns + parallax en la portada y un muro de
+  polaroids con visor a pantalla completa) más los meta tags Open Graph
+  dinámicos para que el link se vea bien en WhatsApp.
 - **RSVP** en `/e/[slug]` con botones Sí / No / Tal vez y una lista dinámica de
   acompañantes (nombre + relación), validada con Zod en cliente y servidor.
 - **Dashboard del evento** en `/dashboard/eventos/[id]`: resumen de
@@ -155,6 +158,7 @@ app/
     upload                         Firma de subida a Cloudinary
     health                         Health check de Render
 components/                        UI reutilizable (formularios, tablas, hero…)
+components/invitation/             Experiencia animada de la invitación pública
 lib/                               Lógica de dominio, integraciones y validaciones
 prisma/schema.prisma               Modelo de datos
 tests/                             Tests de la lógica pura
@@ -181,6 +185,17 @@ tests/                             Tests de la lógica pura
   o patrón SVG en data URI), así que la galería es instantánea, liviana y no
   depende de Cloudinary. Prioridad de la portada: foto (`coverImageUrl`) →
   fondo elegido → degradado por defecto (los eventos ya existentes no cambian).
+- **Invitación animada sin dependencias**: los efectos de `/e/[slug]` (cortina de
+  apertura, partículas y confeti dibujados en `<canvas>`, saludo con efecto
+  máquina de escribir, Ken Burns + parallax en la portada y el muro de
+  polaroids) se construyen con keyframes de Tailwind, la Canvas API e
+  `IntersectionObserver`, sin añadir ninguna librería de animación. El tema por
+  tipo de evento vive en `lib/invitation-theme.ts` y la física de las partículas
+  en `lib/particles.ts`; ambos son módulos puros con tests propios. Todo respeta
+  `prefers-reduced-motion`: con esa preferencia activa no se monta ningún bucle
+  de animación y las secciones aparecen directamente en su estado final. La
+  vista previa del dashboard reutiliza `EventHero` sin animación, así que el
+  panel del anfitrión no carga ningún efecto.
 
 ## Fondos demo: cómo agregar uno nuevo
 

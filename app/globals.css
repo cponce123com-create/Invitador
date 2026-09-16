@@ -34,4 +34,23 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  /* Marco de polaroid del muro de fotos de la invitación. */
+  .polaroid {
+    @apply rounded-sm bg-white p-2 pb-10 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.55)] ring-1 ring-black/5;
+  }
+}
+
+/* Respeta la preferencia del sistema de reducir el movimiento: las animaciones
+   y transiciones se resuelven de inmediato y las secciones quedan en su estado
+   final (todas usan `both` o `infinite`, así que nunca quedan invisibles). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

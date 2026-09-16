@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { HeroCover } from "@/components/invitation/HeroCover";
+import { Typewriter } from "@/components/invitation/Typewriter";
 import {
   backgroundStyleFor,
   type BackgroundTemplateLike,
@@ -16,6 +18,13 @@ type Props = {
   coverImageUrl?: string | null;
   /** Fondo demo elegido por el anfitrión. Se ignora si hay foto de portada. */
   backgroundTemplate?: BackgroundTemplateLike | null;
+  /**
+   * Activa los efectos de la invitación pública (Ken Burns, parallax y el
+   * saludo escrito a máquina). La vista previa del dashboard lo deja apagado.
+   */
+  animate?: boolean;
+  /** Saludo que se escribe a máquina. Solo se usa cuando `animate` está activo. */
+  greeting?: string;
 };
 
 /**
@@ -26,6 +35,9 @@ type Props = {
  *  2. fondo demo (`backgroundTemplate`) + un overlay suave, para que el texto
  *     blanco siga siendo legible sobre paletas claras (baby shower, boda…);
  *  3. degradado por defecto, para no romper los eventos ya existentes.
+ *
+ * Con `animate` la foto se anima con Ken Burns + parallax y aparece el saludo
+ * escrito a máquina; sin esa prop el render es exactamente el de antes.
  */
 export function EventHero({
   title,
@@ -36,19 +48,25 @@ export function EventHero({
   location,
   coverImageUrl,
   backgroundTemplate,
+  animate = false,
+  greeting,
 }: Props) {
   return (
     <section className="relative isolate overflow-hidden bg-slate-900">
       {coverImageUrl ? (
         <>
-          <Image
-            src={optimizedImageUrl(coverImageUrl, 1200)}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover opacity-75"
-          />
+          {animate ? (
+            <HeroCover src={optimizedImageUrl(coverImageUrl, 1200)} priority />
+          ) : (
+            <Image
+              src={optimizedImageUrl(coverImageUrl, 1200)}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover opacity-75"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-slate-900/25" />
         </>
       ) : (
@@ -64,6 +82,13 @@ export function EventHero({
       )}
 
       <div className="relative mx-auto flex min-h-[21rem] max-w-3xl flex-col justify-end gap-3 px-5 py-10 text-white sm:min-h-[26rem] sm:py-14">
+        {animate && greeting ? (
+          <Typewriter
+            text={greeting}
+            className="text-base font-semibold text-white/95 drop-shadow-sm sm:text-lg"
+          />
+        ) : null}
+
         <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide backdrop-blur">
           <span aria-hidden>{EVENT_TYPE_EMOJI[type]}</span>
           {typeLabel}
