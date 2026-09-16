@@ -4,6 +4,7 @@ import { EventHero } from "@/components/EventHero";
 import { InvitationShell } from "@/components/invitation/InvitationShell";
 import { PhotoWall } from "@/components/invitation/PhotoWall";
 import { Reveal } from "@/components/invitation/Reveal";
+import { VenueCard } from "@/components/invitation/VenueCard";
 import { RsvpForm } from "@/components/RsvpForm";
 import { getEventTypeLabel } from "@/lib/constants";
 import { getPublicEventBySlug } from "@/lib/events";
@@ -79,6 +80,17 @@ export default async function PublicEventPage({ params }: PageProps) {
       />
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+        {event.locationImageUrl || event.mapUrl ? (
+          <Reveal>
+            <VenueCard
+              eventTitle={event.title}
+              location={event.location}
+              locationImageUrl={event.locationImageUrl}
+              mapUrl={event.mapUrl}
+            />
+          </Reveal>
+        ) : null}
+
         {event.description ? (
           <Reveal>
             <section className={cardClass}>

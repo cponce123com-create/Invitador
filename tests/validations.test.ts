@@ -90,4 +90,49 @@ describe("eventFormSchema", () => {
         .success,
     ).toBe(false);
   });
+
+  it("acepta la URL de portada y su cadena vacía", () => {
+    const coverImageUrl =
+      "https://res.cloudinary.com/demo/image/upload/portada.jpg";
+
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, coverImageUrl }).success,
+    ).toBe(true);
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, coverImageUrl: "" }).success,
+    ).toBe(true);
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, coverImageUrl: "no-es-url" })
+        .success,
+    ).toBe(false);
+  });
+
+  it("acepta la foto del lugar y el link de Google Maps", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        locationImageUrl:
+          "https://res.cloudinary.com/demo/image/upload/lugar.jpg",
+        mapUrl: "https://maps.app.goo.gl/abc123",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("acepta los campos del lugar vacíos o ausentes", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        locationImageUrl: "",
+        mapUrl: "",
+      }).success,
+    ).toBe(true);
+    expect(eventFormSchema.safeParse(eventBase).success).toBe(true);
+  });
+
+  it("rechaza un link de Maps que no es una URL", () => {
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, mapUrl: "maps.google.com/aqui" })
+        .success,
+    ).toBe(false);
+  });
 });

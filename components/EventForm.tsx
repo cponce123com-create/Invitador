@@ -11,6 +11,7 @@ import {
 } from "@/components/BackgroundPicker";
 import { EventHero } from "@/components/EventHero";
 import { PhotoUploader } from "@/components/PhotoUploader";
+import { SingleImageUploader } from "@/components/SingleImageUploader";
 import {
   EVENT_DETAIL_PLACEHOLDER,
   EVENT_TYPES,
@@ -94,6 +95,8 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
       ageOrDetail: values.ageOrDetail ?? "",
       eventDate: values.eventDate ?? "",
       location: values.location ?? "",
+      locationImageUrl: values.locationImageUrl ?? "",
+      mapUrl: values.mapUrl ?? "",
       description: values.description ?? "",
       coverImageUrl: values.coverImageUrl ?? "",
       backgroundTemplateId: values.backgroundTemplateId ?? "",
@@ -234,6 +237,45 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             <p className={errorClass}>{errors.location.message}</p>
           ) : null}
         </div>
+
+        <div>
+          <label htmlFor="mapUrl" className={labelClass}>
+            Link de Google Maps{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </label>
+          <input
+            id="mapUrl"
+            type="url"
+            className={inputClass}
+            placeholder="https://maps.app.goo.gl/…"
+            aria-invalid={Boolean(errors.mapUrl)}
+            {...register("mapUrl")}
+          />
+          <p className={helpClass}>
+            En Google Maps: Compartir → Copiar vínculo. Si lo dejas vacío, la
+            invitación no muestra el botón de mapa.
+          </p>
+          {errors.mapUrl ? (
+            <p className={errorClass}>{errors.mapUrl.message}</p>
+          ) : null}
+        </div>
+
+        <Controller
+          control={control}
+          name="locationImageUrl"
+          render={({ field }) => (
+            <SingleImageUploader
+              id="locationImageUrl"
+              label="Foto del lugar"
+              help="Opcional: se muestra en una tarjeta debajo de la portada. Es una casilla aparte, no gasta el cupo de fotos de arriba."
+              value={field.value ?? ""}
+              onChange={field.onChange}
+            />
+          )}
+        />
+        {errors.locationImageUrl ? (
+          <p className={errorClass}>{errors.locationImageUrl.message}</p>
+        ) : null}
 
         <div>
           <label htmlFor="description" className={labelClass}>

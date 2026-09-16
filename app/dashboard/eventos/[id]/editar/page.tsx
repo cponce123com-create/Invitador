@@ -28,6 +28,8 @@ export default async function EditEventPage({ params }: PageProps) {
     ageOrDetail: event.ageOrDetail ?? "",
     eventDate: toWallClockInputValue(event.eventDate),
     location: event.location ?? "",
+    locationImageUrl: event.locationImageUrl ?? "",
+    mapUrl: event.mapUrl ?? "",
     description: event.description ?? "",
     coverImageUrl: event.coverImageUrl ?? "",
     backgroundTemplateId: event.backgroundTemplateId ?? "",

@@ -16,6 +16,8 @@ const initialValues: EventFormValues = {
   ageOrDetail: "",
   eventDate: "",
   location: "",
+  locationImageUrl: "",
+  mapUrl: "",
   description: "",
   coverImageUrl: "",
   backgroundTemplateId: "",

@@ -36,6 +36,8 @@ export function toEventScalarData(values: EventFormValues) {
     ageOrDetail: emptyToNull(values.ageOrDetail),
     eventDate: toEventDate(values.eventDate),
     location: emptyToNull(values.location),
+    locationImageUrl: emptyToNull(values.locationImageUrl),
+    mapUrl: emptyToNull(values.mapUrl),
     description: emptyToNull(values.description),
     coverImageUrl: emptyToNull(values.coverImageUrl),
     backgroundTemplateId: emptyToNull(values.backgroundTemplateId),

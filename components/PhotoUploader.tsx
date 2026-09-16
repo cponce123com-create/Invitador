@@ -7,14 +7,16 @@ import {
   MAX_UPLOAD_BYTES,
   optimizedImageUrl,
 } from "@/lib/images";
+import {
+  requestUploadSignature,
+  uploadImageFile,
+  validateImageFile,
+  type UploadedImage,
+} from "@/lib/upload";
 import { errorClass, helpClass, secondaryButtonClass } from "@/lib/ui";
 
 /** Foto ya subida a Cloudinary. `id` solo existe cuando viene de la base de datos. */
-export type UploadedPhoto = {
-  id?: string;
-  url: string;
-  cloudinaryId: string;
-};
+export type UploadedPhoto = UploadedImage & { id?: string };
 
 type Props = {
   value: UploadedPhoto[];
@@ -22,21 +24,6 @@ type Props = {
   coverUrl: string;
   onPickCover: (url: string) => void;
   maxPhotos: number;
-};
-
-type UploadSignature = {
-  apiKey: string;
-  timestamp: number;
-  folder: string;
-  signature: string;
-  uploadUrl: string;
-  maxFileBytes: number;
-};
-
-type CloudinaryUploadResult = {
-  secure_url?: string;
-  public_id?: string;
-  error?: { message?: string };
 };
 
 export function PhotoUploader({ value, onChange, coverUrl, onPickCover, maxPhotos }: Props) {
@@ -54,17 +41,9 @@ export function PhotoUploader({ value, onChange, coverUrl, onPickCover, maxPhoto
 
     try {
       // 1. El backend firma la subida: el api_secret nunca llega al navegador.
-      const signatureResponse = await fetch("/api/upload", { method: "POST" });
-      const signature = (await signatureResponse.json().catch(() => null)) as
-        | (UploadSignature & { error?: string })
-        | null;
-
-      if (!signatureResponse.ok || !signature) {
-        throw new Error(signature?.error ?? "No pudimos preparar la subida de fotos.");
-      }
-
+      const signature = await requestUploadSignature();
       const maxBytes = signature.maxFileBytes || MAX_UPLOAD_BYTES;
-      const uploaded: UploadedPhoto[] = [];
+      const uploaded: UploadedImage[] = [];
 
       for (const file of Array.from(files)) {
         if (uploaded.length >= remaining) {
@@ -72,46 +51,14 @@ export function PhotoUploader({ value, onChange, coverUrl, onPickCover, maxPhoto
           break;
         }
 
-        if (
-          !ALLOWED_UPLOAD_MIME_TYPES.includes(
-            file.type as (typeof ALLOWED_UPLOAD_MIME_TYPES)[number],
-          )
-        ) {
-          setUploadError(`"${file.name}" no es JPG, PNG o WebP.`);
-          continue;
-        }
-
-        if (file.size > maxBytes) {
-          setUploadError(
-            `"${file.name}" pesa más de ${Math.round(maxBytes / (1024 * 1024))} MB.`,
-          );
+        const invalidFile = validateImageFile(file, maxBytes);
+        if (invalidFile) {
+          setUploadError(invalidFile);
           continue;
         }
 
         // 2. Subida directa navegador → Cloudinary (no pasa por Render).
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("api_key", signature.apiKey);
-        formData.append("timestamp", String(signature.timestamp));
-        formData.append("signature", signature.signature);
-        formData.append("folder", signature.folder);
-
-        const uploadResponse = await fetch(signature.uploadUrl, {
-          method: "POST",
-          body: formData,
-        });
-        const result = (await uploadResponse.json().catch(() => null)) as
-          | CloudinaryUploadResult
-          | null;
-
-        if (!uploadResponse.ok || !result?.secure_url || !result.public_id) {
-          throw new Error(result?.error?.message ?? `No pudimos subir "${file.name}".`);
-        }
-
-        uploaded.push({
-          url: result.secure_url,
-          cloudinaryId: result.public_id,
-        });
+        uploaded.push(await uploadImageFile(file, signature));
       }
 
       if (uploaded.length > 0) {

@@ -82,6 +82,12 @@ model Event {
   ageOrDetail          String? // ej: "Cumple 5 años" — texto libre para flexibilidad
   eventDate            DateTime?
   location             String?
+  /// Foto del lugar de la celebración (opcional). Es independiente de la
+  /// galería: no consume el cupo de fotos ni se borra al editar las fotos.
+  locationImageUrl     String?
+  /// Link de Google Maps que pega el anfitrión para que los invitados abran la
+  /// ubicación. Sin link, la invitación no muestra el botón de mapa.
+  mapUrl               String?
   description          String?             @db.Text
   coverImageUrl        String?
   backgroundTemplateId String?

@@ -17,6 +17,13 @@ const optionalText = (max: number, message: string) =>
   z.string().trim().max(max, message).optional();
 
 /**
+ * URL opcional. Acepta la cadena vacía porque es lo que envía el formulario
+ * cuando el anfitrión deja el campo en blanco (se guarda como `null`).
+ */
+const optionalUrl = (message: string) =>
+  z.union([z.string().trim().url(message), z.literal("")]).optional();
+
+/**
  * Formulario de creación/edición de evento.
  *
  * Los campos se validan como strings porque es lo que produce un formulario
@@ -46,10 +53,12 @@ export const eventFormSchema = z.object({
       "Usa el selector de fecha y hora del formulario",
     ),
   location: optionalText(200, "Máximo 200 caracteres"),
+  // Foto del lugar y link de Google Maps: opcionales. Si ambos están vacíos, la
+  // invitación no muestra la tarjeta «El lugar».
+  locationImageUrl: optionalUrl("La URL de la foto del lugar no es válida"),
+  mapUrl: optionalUrl("El link de Google Maps no es válido"),
   description: optionalText(4000, "Máximo 4000 caracteres"),
-  coverImageUrl: z
-    .union([z.string().trim().url("La URL de la portada no es válida"), z.literal("")])
-    .optional(),
+  coverImageUrl: optionalUrl("La URL de la portada no es válida"),
   // Fondo demo elegido (`BackgroundTemplate.id`). Cadena vacía = sin fondo.
   backgroundTemplateId: z
     .union([
