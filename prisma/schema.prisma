@@ -90,6 +90,11 @@ model Event {
   mapUrl               String?
   description          String?             @db.Text
   coverImageUrl        String?
+  /// Imagen del código QR de la mesa de regalos (opcional). En la invitación se
+  /// muestra ampliable, debajo del formulario de confirmación.
+  giftQrUrl            String?
+  /// Texto que acompaña al QR: llave, número de cuenta, etc.
+  giftMessage          String?             @db.Text
   backgroundTemplateId String?
   backgroundTemplate   BackgroundTemplate? @relation(fields: [backgroundTemplateId], references: [id], onDelete: SetNull)
   isActive             Boolean             @default(true)

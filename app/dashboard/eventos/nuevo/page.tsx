@@ -20,6 +20,8 @@ const initialValues: EventFormValues = {
   mapUrl: "",
   description: "",
   coverImageUrl: "",
+  giftQrUrl: "",
+  giftMessage: "",
   backgroundTemplateId: "",
   maxGuestsPerRsvp: DEFAULT_MAX_GUESTS_PER_RSVP,
   isActive: true,

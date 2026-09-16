@@ -9,6 +9,12 @@ import { Lightbox } from "./Lightbox";
 /** El visor de una sola foto no navega: no hay índice al que saltar. */
 const noop = () => {};
 
+/** Recuadro por defecto: ancho completo con proporción 4:3 (foto del lugar). */
+const defaultWrapperClass = "w-full aspect-[4/3] bg-slate-100";
+
+/** Aspecto por defecto de la imagen ampliable: cubre el recuadro con un zoom suave. */
+const defaultImageClass = "object-cover transition duration-500 group-hover:scale-[1.03]";
+
 type Props = {
   src: string;
   /** Texto alternativo de la imagen y título del visor. */
@@ -16,7 +22,9 @@ type Props = {
   /** Ancho de la variante optimizada que se muestra en la tarjeta. */
   optimizedWidth?: number;
   sizes?: string;
+  /** Clases del recuadro. Por defecto: ancho completo, proporción 4:3. */
   wrapperClassName?: string;
+  /** Clases de la imagen. Por defecto: `object-cover` con zoom al pasar el dedo. */
   imageClassName?: string;
 };
 
@@ -44,8 +52,8 @@ export function ZoomableImage({
         onClick={() => setIsOpen(true)}
         aria-label={`Ampliar: ${alt}`}
         className={cn(
-          "group relative block w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100",
-          wrapperClassName ?? "aspect-[4/3]",
+          "group relative block overflow-hidden rounded-2xl border border-slate-200",
+          wrapperClassName ?? defaultWrapperClass,
         )}
       >
         <Image
@@ -53,10 +61,7 @@ export function ZoomableImage({
           alt={alt}
           fill
           sizes={sizes}
-          className={cn(
-            "object-cover transition duration-500 group-hover:scale-[1.03]",
-            imageClassName,
-          )}
+          className={imageClassName ?? defaultImageClass}
         />
         <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur">
           Ampliar

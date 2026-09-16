@@ -32,6 +32,8 @@ export default async function EditEventPage({ params }: PageProps) {
     mapUrl: event.mapUrl ?? "",
     description: event.description ?? "",
     coverImageUrl: event.coverImageUrl ?? "",
+    giftQrUrl: event.giftQrUrl ?? "",
+    giftMessage: event.giftMessage ?? "",
     backgroundTemplateId: event.backgroundTemplateId ?? "",
     maxGuestsPerRsvp: event.maxGuestsPerRsvp,
     isActive: event.isActive,

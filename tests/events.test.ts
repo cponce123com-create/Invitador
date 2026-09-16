@@ -69,6 +69,22 @@ describe("toEventScalarData", () => {
     );
     expect(data.mapUrl).toBe("https://maps.app.goo.gl/abc123");
   });
+
+  it("guarda null sin mesa de regalos y conserva el QR con su texto", () => {
+    expect(toEventScalarData(formValues).giftQrUrl).toBeNull();
+    expect(toEventScalarData(formValues).giftMessage).toBeNull();
+
+    const data = toEventScalarData({
+      ...formValues,
+      giftQrUrl: "https://res.cloudinary.com/demo/image/upload/qr.png",
+      giftMessage: "  Llave Bre-B 300 123 4567  ",
+    });
+
+    expect(data.giftQrUrl).toBe(
+      "https://res.cloudinary.com/demo/image/upload/qr.png",
+    );
+    expect(data.giftMessage).toBe("Llave Bre-B 300 123 4567");
+  });
 });
 
 describe("computeEventStats", () => {

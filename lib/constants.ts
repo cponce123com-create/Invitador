@@ -110,6 +110,9 @@ export const DEFAULT_MAX_GUESTS_PER_RSVP = 3;
 export const MAX_GUESTS_PER_RSVP_LIMIT = 20;
 export const MAX_EVENT_PHOTOS = 30;
 
+/** Longitud máxima del texto que acompaña al QR de la mesa de regalos. */
+export const MAX_GIFT_MESSAGE = 300;
+
 /** id del proveedor de Auth.js basado en email + contraseña. */
 export const CREDENTIALS_PROVIDER_ID = "credentials";
 

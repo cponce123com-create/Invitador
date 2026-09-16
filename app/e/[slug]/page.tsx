@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EventHero } from "@/components/EventHero";
+import { GiftCard } from "@/components/invitation/GiftCard";
 import { InvitationShell } from "@/components/invitation/InvitationShell";
 import { PhotoWall } from "@/components/invitation/PhotoWall";
 import { Reveal } from "@/components/invitation/Reveal";
@@ -116,6 +117,16 @@ export default async function PublicEventPage({ params }: PageProps) {
             maxGuestsPerRsvp={event.maxGuestsPerRsvp}
           />
         </Reveal>
+
+        {event.giftQrUrl ? (
+          <Reveal>
+            <GiftCard
+              eventTitle={event.title}
+              giftQrUrl={event.giftQrUrl}
+              giftMessage={event.giftMessage}
+            />
+          </Reveal>
+        ) : null}
 
         <footer className="space-y-1 pt-2 text-center text-xs text-slate-400">
           <p>Invitación creada con Invitador</p>

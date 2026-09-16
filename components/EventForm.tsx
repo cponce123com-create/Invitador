@@ -18,6 +18,7 @@ import {
   EVENT_TYPE_LABELS,
   getEventTypeLabel,
   MAX_EVENT_PHOTOS,
+  MAX_GIFT_MESSAGE,
   MAX_GUESTS_PER_RSVP_LIMIT,
 } from "@/lib/constants";
 import { formatEventDate, parseWallClockInput } from "@/lib/format";
@@ -99,6 +100,8 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
       mapUrl: values.mapUrl ?? "",
       description: values.description ?? "",
       coverImageUrl: values.coverImageUrl ?? "",
+      giftQrUrl: values.giftQrUrl ?? "",
+      giftMessage: values.giftMessage ?? "",
       backgroundTemplateId: values.backgroundTemplateId ?? "",
       photos: values.photos ?? [],
     };
@@ -367,6 +370,58 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
               backgroundTemplate={selectedTemplate}
             />
           </div>
+        </div>
+      </section>
+
+      <section className={`${cardClass} space-y-5`}>
+        <div>
+          <h2 className="text-base font-bold text-slate-900">
+            Regalos{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </h2>
+          <p className={helpClass}>
+            Sube el QR de tu mesa de regalos y escribe los datos debajo. Si no
+            subes ningún QR, la invitación no muestra esta sección.
+          </p>
+        </div>
+
+        <Controller
+          control={control}
+          name="giftQrUrl"
+          render={({ field }) => (
+            <SingleImageUploader
+              id="giftQrUrl"
+              label="Código QR"
+              help="Una sola imagen. En la invitación se ve ampliable."
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              variant="qr"
+            />
+          )}
+        />
+        {errors.giftQrUrl ? (
+          <p className={errorClass}>{errors.giftQrUrl.message}</p>
+        ) : null}
+
+        <div>
+          <label htmlFor="giftMessage" className={labelClass}>
+            Datos de la mesa de regalos{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </label>
+          <textarea
+            id="giftMessage"
+            rows={3}
+            maxLength={MAX_GIFT_MESSAGE}
+            className={inputClass}
+            placeholder="Ej: Llave Bre-B 300 123 4567 · Cuenta de ahorros 1234-5678"
+            {...register("giftMessage")}
+          />
+          <p className={helpClass}>
+            Aparece junto al QR. Máximo {MAX_GIFT_MESSAGE} caracteres.
+          </p>
+          {errors.giftMessage ? (
+            <p className={errorClass}>{errors.giftMessage.message}</p>
+          ) : null}
         </div>
       </section>
 

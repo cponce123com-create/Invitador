@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MAX_GIFT_MESSAGE } from "@/lib/constants";
 import { eventFormSchema } from "@/lib/validations/event";
 import { createRsvpSchema } from "@/lib/validations/rsvp";
 
@@ -133,6 +134,48 @@ describe("eventFormSchema", () => {
     expect(
       eventFormSchema.safeParse({ ...eventBase, mapUrl: "maps.google.com/aqui" })
         .success,
+    ).toBe(false);
+  });
+
+  it("acepta el QR de regalos con su texto", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftQrUrl: "https://res.cloudinary.com/demo/image/upload/qr.png",
+        giftMessage: "Llave Bre-B 300 123 4567",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("acepta la mesa de regalos vacía o ausente", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftQrUrl: "",
+        giftMessage: "",
+      }).success,
+    ).toBe(true);
+    expect(eventFormSchema.safeParse(eventBase).success).toBe(true);
+  });
+
+  it("limita la longitud del texto de la mesa de regalos", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftMessage: "a".repeat(MAX_GIFT_MESSAGE),
+      }).success,
+    ).toBe(true);
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftMessage: "a".repeat(MAX_GIFT_MESSAGE + 1),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rechaza un QR de regalos que no es una URL", () => {
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, giftQrUrl: "qr.png" }).success,
     ).toBe(false);
   });
 });

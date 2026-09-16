@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   EVENT_TYPES,
   MAX_EVENT_PHOTOS,
+  MAX_GIFT_MESSAGE,
   MAX_GUESTS_PER_RSVP_LIMIT,
 } from "@/lib/constants";
 import { parseWallClockInput } from "@/lib/format";
@@ -59,6 +60,12 @@ export const eventFormSchema = z.object({
   mapUrl: optionalUrl("El link de Google Maps no es válido"),
   description: optionalText(4000, "Máximo 4000 caracteres"),
   coverImageUrl: optionalUrl("La URL de la portada no es válida"),
+  // Mesa de regalos: un único QR y el texto que lo acompaña (llave, cuenta…).
+  giftQrUrl: optionalUrl("La URL del QR de regalos no es válida"),
+  giftMessage: optionalText(
+    MAX_GIFT_MESSAGE,
+    `Máximo ${MAX_GIFT_MESSAGE} caracteres`,
+  ),
   // Fondo demo elegido (`BackgroundTemplate.id`). Cadena vacía = sin fondo.
   backgroundTemplateId: z
     .union([
