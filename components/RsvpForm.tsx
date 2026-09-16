@@ -105,13 +105,6 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
           Registramos tu respuesta:{" "}
           <strong className="text-slate-900">{ATTENDANCE_LABELS[confirmed]}</strong>.
         </p>
-        <button
-          type="button"
-          className={secondaryButtonClass}
-          onClick={() => setConfirmed(null)}
-        >
-          Confirmar otra persona
-        </button>
       </div>
     );
   }
