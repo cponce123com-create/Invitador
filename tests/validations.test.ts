@@ -10,11 +10,30 @@ import { createRsvpSchema, updateRsvpSchema } from "@/lib/validations/rsvp";
 const rsvpBase = {
   eventId: "evt_1",
   mainGuestName: "Ana",
+  mainGuestPhone: "987654321",
   attendance: "SI" as const,
   additionalGuests: [],
 };
 
 describe("createRsvpSchema", () => {
+  it("exige el celular del invitado principal", () => {
+    expect(
+      createRsvpSchema(3).safeParse({ ...rsvpBase, mainGuestPhone: "" }).success,
+    ).toBe(false);
+    expect(
+      createRsvpSchema(3).safeParse({ ...rsvpBase, mainGuestPhone: "12345" })
+        .success,
+    ).toBe(false);
+    expect(
+      createRsvpSchema(3).safeParse({
+        eventId: "evt_1",
+        mainGuestName: "Ana",
+        attendance: "SI",
+        additionalGuests: [],
+      }).success,
+    ).toBe(false);
+  });
+
   it("respeta el tope de acompañantes del evento", () => {
     const result = createRsvpSchema(1).safeParse({
       ...rsvpBase,
@@ -44,6 +63,7 @@ describe("createRsvpSchema", () => {
 
 const rsvpEditBase = {
   mainGuestName: "Ana",
+  mainGuestPhone: "987654321",
   attendance: "SI" as const,
   additionalGuests: [],
 };
@@ -71,13 +91,14 @@ describe("updateRsvpSchema", () => {
     ).toBe(false);
   });
 
-  it("acepta teléfono y mensaje vacíos (se guardan como nulos)", () => {
-    const result = updateRsvpSchema(3).safeParse({
-      ...rsvpEditBase,
-      mainGuestPhone: "",
-      message: "",
-    });
-    expect(result.success).toBe(true);
+  it("mantiene el celular obligatorio y el mensaje opcional", () => {
+    expect(
+      updateRsvpSchema(3).safeParse({ ...rsvpEditBase, mainGuestPhone: "" })
+        .success,
+    ).toBe(false);
+    expect(
+      updateRsvpSchema(3).safeParse({ ...rsvpEditBase, message: "" }).success,
+    ).toBe(true);
   });
 });
 

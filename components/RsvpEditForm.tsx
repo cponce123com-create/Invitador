@@ -130,7 +130,7 @@ export function RsvpEditForm({
 
         <div>
           <label htmlFor={`${uid}-phone`} className={labelClass}>
-            Teléfono <span className="font-normal text-slate-400">(opcional)</span>
+            Teléfono <span className="text-rose-500">*</span>
           </label>
           <input
             id={`${uid}-phone`}

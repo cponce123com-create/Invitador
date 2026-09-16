@@ -168,12 +168,12 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
 
       <div>
         <label htmlFor="mainGuestPhone" className={labelClass}>
-          Teléfono <span className="font-normal text-slate-400">(opcional)</span>
+          Teléfono <span className="text-rose-500">*</span>
         </label>
         <input
           id="mainGuestPhone"
           className={inputClass}
-          placeholder="Ej: +57 300 123 4567"
+          placeholder="Ej: 987654321"
           inputMode="tel"
           autoComplete="tel"
           aria-invalid={Boolean(errors.mainGuestPhone)}

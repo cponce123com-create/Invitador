@@ -60,7 +60,7 @@ export async function PATCH(
     where: { id: rsvp.id },
     data: {
       mainGuestName: values.mainGuestName.trim(),
-      mainGuestPhone: emptyToNull(values.mainGuestPhone),
+      mainGuestPhone: values.mainGuestPhone,
       attendance: values.attendance,
       message: emptyToNull(values.message),
       // Lo que se ve en el panel manda: se reemplazan los acompañantes guardados

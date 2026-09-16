@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     data: {
       eventId: event.id,
       mainGuestName: values.mainGuestName.trim(),
-      mainGuestPhone: emptyToNull(values.mainGuestPhone),
+      mainGuestPhone: values.mainGuestPhone,
       attendance: values.attendance,
       message: emptyToNull(values.message),
       additionalGuests: {

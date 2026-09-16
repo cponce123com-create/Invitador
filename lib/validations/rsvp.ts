@@ -29,7 +29,11 @@ export function createRsvpSchema(maxGuests: number) {
       .trim()
       .min(2, "Escribe tu nombre")
       .max(80, "Máximo 80 caracteres"),
-    mainGuestPhone: z.string().trim().max(30, "Máximo 30 caracteres").optional(),
+    mainGuestPhone: z
+      .string()
+      .trim()
+      .min(6, "Escribe tu celular")
+      .max(30, "Máximo 30 caracteres"),
     attendance: z.enum(ATTENDANCE_STATUSES, {
       errorMap: () => ({ message: "Indica si podrás asistir" }),
     }),
