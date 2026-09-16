@@ -139,3 +139,16 @@ export function getEventTypeLabel(
   const custom = customLabel?.trim();
   return custom && custom.length > 0 ? custom : EVENT_TYPE_LABELS[type];
 }
+
+/**
+ * Créditos del pie de la invitación pública. Se pintan en una sola línea que
+ * corre como una cinta (ver `components/invitation/FooterRibbon.tsx`); el año
+ * entra como dato para poder probarlos sin depender del reloj.
+ */
+export function footerRibbonItems(year: number): string[] {
+  return [
+    "Invitación creada con Invitador",
+    "Desarrollado por Pisanucas Tec",
+    `Todos los derechos reservados © ${year}`,
+  ];
+}

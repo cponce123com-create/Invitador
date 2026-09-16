@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EventHero } from "@/components/EventHero";
+import { FooterRibbon } from "@/components/invitation/FooterRibbon";
 import { GiftCard } from "@/components/invitation/GiftCard";
 import { GiftProofForm } from "@/components/invitation/GiftProofForm";
 import { InvitationShell } from "@/components/invitation/InvitationShell";
@@ -137,12 +138,7 @@ export default async function PublicEventPage({ params }: PageProps) {
           </Reveal>
         ) : null}
 
-        <footer className="space-y-1 pt-2 text-center text-xs text-slate-400">
-          <p>Invitación creada con Invitador</p>
-          <p className="font-medium text-slate-500">
-            Desarrollado por Pisanucas Tec
-          </p>
-        </footer>
+        <FooterRibbon />
       </div>
     </InvitationShell>
   );

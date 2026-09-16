@@ -68,6 +68,14 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(28px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        // Cinta del pie: el bloque se pinta dos veces y cada copia se desplaza
+        // justo su ancho, así que el bucle encadena sin huecos. Se anima con
+        // `transform` para que la composición quede en la GPU. Sin `fill`, para
+        // que al reducir el movimiento la cinta quede quieta donde está.
+        marquee: {
+          "0%": { transform: "translate3d(0, 0, 0)" },
+          "100%": { transform: "translate3d(-100%, 0, 0)" },
+        },
       },
       animation: {
         "fade-in-up": "fade-in-up 0.35s ease-out both",
@@ -78,6 +86,7 @@ const config: Config = {
         shimmer: "shimmer 2.4s linear infinite",
         "gradient-pan": "gradient-pan 16s ease-in-out infinite",
         "reveal-up": "reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both",
+        marquee: "marquee 26s linear infinite",
       },
     },
   },

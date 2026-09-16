@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getEventTypeLabel } from "@/lib/constants";
+import { footerRibbonItems, getEventTypeLabel } from "@/lib/constants";
 import { optimizedImageUrl, socialImageUrl } from "@/lib/images";
 
 describe("getEventTypeLabel", () => {
@@ -36,6 +36,23 @@ describe("socialImageUrl", () => {
     const url = "https://res.cloudinary.com/demo/image/upload/v1/foto.jpg";
     expect(socialImageUrl(url)).toContain(
       "/image/upload/f_auto,q_auto,c_fill,g_auto,w_1200,h_630/",
+    );
+  });
+});
+
+describe("footerRibbonItems", () => {
+  it("reúne los créditos del pie en una sola lista", () => {
+    expect(footerRibbonItems(2026)).toEqual([
+      "Invitación creada con Invitador",
+      "Desarrollado por Pisanucas Tec",
+      "Todos los derechos reservados © 2026",
+    ]);
+  });
+
+  it("usa el año recibido en la reserva de derechos", () => {
+    const items = footerRibbonItems(2030);
+    expect(items[items.length - 1]).toBe(
+      "Todos los derechos reservados © 2030",
     );
   });
 });
