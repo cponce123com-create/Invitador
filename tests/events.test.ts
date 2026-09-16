@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeEventStats,
   emptyToNull,
+  photosBelongToHost,
   toEventDate,
   toEventScalarData,
 } from "@/lib/events";
@@ -113,5 +114,32 @@ describe("computeEventStats", () => {
       totalRsvps: 0,
       totalPeople: 0,
     });
+  });
+});
+
+const foto = (cloudinaryId: string) => ({
+  url: `https://res.cloudinary.com/demo/image/upload/v1/${cloudinaryId}.jpg`,
+  cloudinaryId,
+});
+
+describe("photosBelongToHost", () => {
+  it("acepta las fotos de la carpeta del anfitrión", () => {
+    expect(
+      photosBelongToHost("host-1", [foto("invitador/host-1/una")]),
+    ).toBe(true);
+  });
+
+  it("rechaza la lista si una sola foto es de otro anfitrión", () => {
+    expect(
+      photosBelongToHost("host-1", [
+        foto("invitador/host-1/una"),
+        foto("invitador/host-2/ajena"),
+      ]),
+    ).toBe(false);
+  });
+
+  it("acepta una galería vacía o ausente", () => {
+    expect(photosBelongToHost("host-1", [])).toBe(true);
+    expect(photosBelongToHost("host-1", undefined)).toBe(true);
   });
 });

@@ -10,6 +10,7 @@ import {
   CLOUDINARY_FOLDER_ROOT,
   MAX_UPLOAD_BYTES,
 } from "@/lib/images";
+import { checkUploadRateLimit } from "@/lib/rate-limit";
 import { getCurrentHost } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,13 @@ export async function POST() {
   const host = await getCurrentHost();
   if (!host) {
     return jsonError("Inicia sesión para subir fotos", 401);
+  }
+
+  // Tope por anfitrión: corta la petición masiva de firmas sin molestar a quien
+  // crea un evento normal (30 fotos + portada + foto del lugar + QR ≈ 33).
+  const gate = await checkUploadRateLimit(host.id);
+  if (!gate.success) {
+    return jsonError("Demasiadas subidas seguidas. Espera unos minutos.", 429);
   }
 
   try {

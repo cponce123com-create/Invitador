@@ -2,6 +2,8 @@ import {
   GIFT_RATE_LIMIT,
   LOGIN_RATE_LIMIT,
   RSVP_RATE_LIMIT,
+  SETUP_RATE_LIMIT,
+  UPLOAD_RATE_LIMIT,
 } from "@/lib/constants";
 
 export type RateLimitResult = {
@@ -17,7 +19,7 @@ export type RateLimitResult = {
  *
  * Suficiente para desarrollo o para una única instancia. En producción con
  * varias instancias de Render hay que configurar Upstash (ver
- * `checkRsvpRateLimit`), porque cada instancia tendría su propio contador.
+ * `checkRateLimit`), porque cada instancia tendría su propio contador.
  */
 export class InMemoryRateLimiter {
   private readonly hits = new Map<string, number[]>();
@@ -82,10 +84,22 @@ export const giftProofLimiter = new InMemoryRateLimiter(
   GIFT_RATE_LIMIT.windowMs,
 );
 
-/** Intentos de login por email. Se consulta desde `lib/auth.ts`. */
+/** Intentos de login por IP + email. Se consulta desde `lib/auth.ts`. */
 export const loginLimiter = new InMemoryRateLimiter(
   LOGIN_RATE_LIMIT.limit,
   LOGIN_RATE_LIMIT.windowMs,
+);
+
+/** Instalación inicial (`/api/setup`) por IP. */
+export const setupLimiter = new InMemoryRateLimiter(
+  SETUP_RATE_LIMIT.limit,
+  SETUP_RATE_LIMIT.windowMs,
+);
+
+/** Firmas de subida por anfitrión. */
+export const uploadLimiter = new InMemoryRateLimiter(
+  UPLOAD_RATE_LIMIT.limit,
+  UPLOAD_RATE_LIMIT.windowMs,
 );
 
 type UpstashLimiter = {
@@ -112,6 +126,24 @@ const GIFT_POLICY: UpstashPolicy = {
   limit: GIFT_RATE_LIMIT.limit,
   window: "10 m",
   prefix: "invitador:regalos",
+};
+
+const LOGIN_POLICY: UpstashPolicy = {
+  limit: LOGIN_RATE_LIMIT.limit,
+  window: "1 m",
+  prefix: "invitador:login",
+};
+
+const SETUP_POLICY: UpstashPolicy = {
+  limit: SETUP_RATE_LIMIT.limit,
+  window: "10 m",
+  prefix: "invitador:setup",
+};
+
+const UPLOAD_POLICY: UpstashPolicy = {
+  limit: UPLOAD_RATE_LIMIT.limit,
+  window: "10 m",
+  prefix: "invitador:subidas",
 };
 
 // Un limitador por prefijo: cada política tiene su propia cuota en Redis.
@@ -186,4 +218,23 @@ export function checkRsvpRateLimit(identifier: string): Promise<RateLimitResult>
  */
 export function checkGiftRateLimit(identifier: string): Promise<RateLimitResult> {
   return checkRateLimit(GIFT_POLICY, giftProofLimiter, identifier);
+}
+
+/**
+ * Rate limiting del login (por IP + email). Antes solo se contaba en memoria y
+ * por email, así que varias instancias multiplicaban el cupo y un atacante
+ * podía bloquear a un usuario conocido.
+ */
+export function checkLoginRateLimit(identifier: string): Promise<RateLimitResult> {
+  return checkRateLimit(LOGIN_POLICY, loginLimiter, identifier);
+}
+
+/** Rate limiting de la instalación inicial (`/api/setup`, por IP). */
+export function checkSetupRateLimit(identifier: string): Promise<RateLimitResult> {
+  return checkRateLimit(SETUP_POLICY, setupLimiter, identifier);
+}
+
+/** Rate limiting de las firmas de subida (por anfitrión). */
+export function checkUploadRateLimit(identifier: string): Promise<RateLimitResult> {
+  return checkRateLimit(UPLOAD_POLICY, uploadLimiter, identifier);
 }

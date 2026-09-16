@@ -4,6 +4,7 @@ import {
   type AttendanceStatusValue,
 } from "@/lib/constants";
 import { parseWallClockInput } from "@/lib/format";
+import { isGiftAssetId, isHostAssetId } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { buildEventSlug } from "@/lib/slug";
 import type { EventFormValues } from "@/lib/validations/event";
@@ -65,6 +66,23 @@ export async function createUniqueEventSlug(title: string): Promise<string> {
 }
 
 /**
+ * `true` si TODAS las fotos apuntan a un asset de la carpeta de Cloudinary de
+ * este anfitrión.
+ *
+ * El `cloudinaryId` viaja en el formulario, así que hay que comprobar que el
+ * asset es suyo antes de guardarlo: si no, un anfitrión podría guardar el
+ * `public_id` de otro y borrárselo después.
+ */
+export function photosBelongToHost(
+  hostId: string,
+  photos: EventFormValues["photos"],
+): boolean {
+  return (photos ?? []).every((photo) =>
+    isHostAssetId(hostId, photo.cloudinaryId),
+  );
+}
+
+/**
  * Reconcilia las fotos enviadas por el formulario con las guardadas.
  *
  * - Las fotos que ya no vienen en el payload se borran de la base y de Cloudinary.
@@ -72,11 +90,13 @@ export async function createUniqueEventSlug(title: string): Promise<string> {
  * - Las nuevas se crean.
  *
  * Solo se aceptan ids de fotos que pertenecen a este evento: así un anfitrión no
- * puede "robar" fotos de otro evento enviando su id.
+ * puede "robar" fotos de otro evento enviando su id. Y solo se destruyen assets
+ * que estén dentro de su propia carpeta de Cloudinary.
  */
 export async function syncEventPhotos(
   eventId: string,
   photos: EventFormValues["photos"],
+  hostId: string,
 ): Promise<void> {
   const incoming = photos ?? [];
   const existing = await prisma.eventPhoto.findMany({
@@ -108,9 +128,15 @@ export async function syncEventPhotos(
   ]);
 
   // El borrado en Cloudinary va fuera de la transacción: es un servicio externo
-  // y no debe hacer rollback de los cambios ya confirmados en la base.
-  if (removed.length > 0) {
-    await Promise.all(removed.map((photo) => deleteCloudinaryImage(photo.cloudinaryId)));
+  // y no debe hacer rollback de los cambios ya confirmados en la base. Solo se
+  // destruyen assets de la carpeta de este anfitrión.
+  const removable = removed.filter((photo) =>
+    isHostAssetId(hostId, photo.cloudinaryId),
+  );
+  if (removable.length > 0) {
+    await Promise.all(
+      removable.map((photo) => deleteCloudinaryImage(photo.cloudinaryId)),
+    );
   }
 }
 

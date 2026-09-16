@@ -129,8 +129,21 @@ export const RSVP_RATE_LIMIT = { limit: 8, windowMs: 60_000 } as const;
  */
 export const GIFT_RATE_LIMIT = { limit: 10, windowMs: 10 * 60_000 } as const;
 
-/** Límite de intentos de login (por email). */
+/** Límite de intentos de login (por IP + email). */
 export const LOGIN_RATE_LIMIT = { limit: 5, windowMs: 60_000 } as const;
+
+/**
+ * Límite del endpoint público de instalación inicial (`/api/setup`, por IP).
+ * Solo puede consumirse mientras no exista ningún administrador.
+ */
+export const SETUP_RATE_LIMIT = { limit: 5, windowMs: 10 * 60_000 } as const;
+
+/**
+ * Límite de firmas de subida por anfitrión. Es holgado a propósito: crear un
+ * evento con 30 fotos, portada, foto del lugar y QR gasta unas 33 firmas
+ * seguidas, y un anfitrión activo puede crear varios eventos en una sesión.
+ */
+export const UPLOAD_RATE_LIMIT = { limit: 120, windowMs: 10 * 60_000 } as const;
 
 export function getEventTypeLabel(
   type: EventTypeValue,

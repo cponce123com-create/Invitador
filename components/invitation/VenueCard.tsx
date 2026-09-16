@@ -1,4 +1,5 @@
 import { cardClass, secondaryButtonClass } from "@/lib/ui";
+import { isHttpUrl } from "@/lib/urls";
 import { ZoomableImage } from "./ZoomableImage";
 
 type Props = {
@@ -45,7 +46,7 @@ export function VenueCard({
         </p>
       ) : null}
 
-      {mapUrl ? (
+      {mapUrl && isHttpUrl(mapUrl) ? (
         <a
           href={mapUrl}
           target="_blank"

@@ -108,7 +108,15 @@ export default async function PublicEventPage({ params }: PageProps) {
           <Reveal>
             <section className={`${cardClass} space-y-4`}>
               <h2 className="text-base font-bold text-slate-900">Fotos</h2>
-              <PhotoWall photos={event.photos} title={event.title} />
+              {/* Al cliente solo van `id` y `url`: el `cloudinaryId` es un
+                  identificador interno que no debe viajar en el payload. */}
+              <PhotoWall
+                photos={event.photos.map((photo) => ({
+                  id: photo.id,
+                  url: photo.url,
+                }))}
+                title={event.title}
+              />
             </section>
           </Reveal>
         ) : null}

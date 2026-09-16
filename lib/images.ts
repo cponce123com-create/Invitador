@@ -20,6 +20,24 @@ export function isGiftAssetId(eventId: string, cloudinaryId: string): boolean {
   return cloudinaryId.startsWith(prefix) && cloudinaryId.length > prefix.length;
 }
 
+/** Carpeta donde se guardan las fotos de un anfitrión (portada, galería, QR…). */
+export function hostAssetFolder(hostId: string): string {
+  return `${CLOUDINARY_FOLDER_ROOT}/${hostId}`;
+}
+
+/**
+ * Comprueba que un `public_id` de Cloudinary venga de la carpeta del anfitrión.
+ *
+ * El `cloudinaryId` lo envía el navegador, así que no es de fiar: sin esta
+ * comprobación un anfitrión podría guardar el `public_id` de otro (que se
+ * publica en la invitación) y hacer que el borrado posterior destruyera un asset
+ * ajeno.
+ */
+export function isHostAssetId(hostId: string, cloudinaryId: string): boolean {
+  const prefix = `${hostAssetFolder(hostId)}/`;
+  return cloudinaryId.startsWith(prefix) && cloudinaryId.length > prefix.length;
+}
+
 /** 5 MB: suficiente para fotos de celular y mantiene la página liviana. */
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 

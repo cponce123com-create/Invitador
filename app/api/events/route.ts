@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
-import { createUniqueEventSlug, toEventScalarData } from "@/lib/events";
+import {
+  createUniqueEventSlug,
+  photosBelongToHost,
+  toEventScalarData,
+} from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import { getCurrentHost } from "@/lib/session";
 import { eventFormSchema } from "@/lib/validations/event";
@@ -33,6 +37,12 @@ export async function POST(request: Request) {
   if (!parsed.success) return zodErrorResponse(parsed.error);
 
   const values = parsed.data;
+
+  // El `cloudinaryId` lo envía el cliente: solo se aceptan fotos de su carpeta.
+  if (!photosBelongToHost(host.id, values.photos ?? [])) {
+    return jsonError("Alguna de las fotos no pertenece a tu cuenta", 400);
+  }
+
   const slug = await createUniqueEventSlug(values.title);
 
   const event = await prisma.event.create({

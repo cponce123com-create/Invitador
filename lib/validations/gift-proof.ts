@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_GIFT_MESSAGE } from "@/lib/constants";
+import { isHttpUrl } from "@/lib/urls";
 
 /**
  * Campos que escribe el invitado en el formulario público del comprobante.
@@ -28,7 +29,11 @@ export type GiftProofFormValues = z.infer<typeof giftProofFormSchema>;
  */
 export const giftProofRequestSchema = giftProofFormSchema.extend({
   eventId: z.string().trim().min(1, "Falta el evento"),
-  url: z.string().trim().url("La URL del comprobante no es válida"),
+  url: z
+    .string()
+    .trim()
+    .url("La URL del comprobante no es válida")
+    .refine(isHttpUrl, "La URL del comprobante no es válida"),
   cloudinaryId: z
     .string()
     .trim()

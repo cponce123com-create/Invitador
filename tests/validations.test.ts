@@ -279,3 +279,44 @@ describe("giftProofRequestSchema", () => {
     ).toBe(false);
   });
 });
+
+describe("URLs con esquema peligroso", () => {
+  const peligrosas = [
+    "javascript:alert(1)",
+    "JaVaScRiPt:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox(1)",
+  ];
+
+  it("las rechaza en los enlaces del evento", () => {
+    for (const url of peligrosas) {
+      expect(
+        eventFormSchema.safeParse({ ...eventBase, mapUrl: url }).success,
+      ).toBe(false);
+      expect(
+        eventFormSchema.safeParse({ ...eventBase, locationImageUrl: url })
+          .success,
+      ).toBe(false);
+      expect(
+        eventFormSchema.safeParse({ ...eventBase, coverImageUrl: url }).success,
+      ).toBe(false);
+      expect(
+        eventFormSchema.safeParse({ ...eventBase, giftQrUrl: url }).success,
+      ).toBe(false);
+    }
+  });
+
+  it("las rechaza en la URL del comprobante de regalo", () => {
+    for (const url of peligrosas) {
+      expect(
+        giftProofRequestSchema.safeParse({
+          senderName: "Ana",
+          note: "",
+          eventId: "ev1",
+          url,
+          cloudinaryId: "invitador/regalos/ev1/abc123",
+        }).success,
+      ).toBe(false);
+    }
+  });
+});

@@ -22,6 +22,25 @@ describe("escapeCsvCell", () => {
     expect(escapeCsvCell(null)).toBe("");
     expect(escapeCsvCell(undefined)).toBe("");
   });
+
+  it("neutraliza las fórmulas que abriría Excel o Sheets", () => {
+    expect(escapeCsvCell("=1+1")).toBe("'=1+1");
+    expect(escapeCsvCell("+34 600 000 000")).toBe("'+34 600 000 000");
+    expect(escapeCsvCell("-2+3")).toBe("'-2+3");
+    expect(escapeCsvCell("@SUM(A1)")).toBe("'@SUM(A1)");
+    expect(escapeCsvCell("\t=cmd")).toBe("'\t=cmd");
+  });
+
+  it("entrecomilla la fórmula si además lleva separadores o saltos", () => {
+    expect(escapeCsvCell("=1,2")).toBe("\"'=1,2\"");
+    expect(escapeCsvCell("\r=cmd")).toBe("\"'\r=cmd\"");
+  });
+
+  it("deja intacto el texto normal", () => {
+    expect(escapeCsvCell("Ana")).toBe("Ana");
+    expect(escapeCsvCell("3 invitados")).toBe("3 invitados");
+    expect(escapeCsvCell("Hola, mundo")).toBe('"Hola, mundo"');
+  });
 });
 
 describe("toCsv", () => {

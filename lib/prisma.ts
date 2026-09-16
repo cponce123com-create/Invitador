@@ -22,3 +22,15 @@ export function isUniqueConstraintError(error: unknown): boolean {
     error.code === "P2002"
   );
 }
+
+/**
+ * `true` si la transacción se abortó por conflicto de escritura o interbloqueo
+ * (código P2034). Ocurre con el aislamiento `Serializable`, que es justo lo que
+ * impide crear dos administradores a la vez en `/api/setup`.
+ */
+export function isSerializationError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2034"
+  );
+}

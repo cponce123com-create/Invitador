@@ -6,11 +6,21 @@ import {
   MAX_GUESTS_PER_RSVP_LIMIT,
 } from "@/lib/constants";
 import { parseWallClockInput } from "@/lib/format";
+import { isHttpUrl } from "@/lib/urls";
+
+/**
+ * URL con esquema `http`/`https`.
+ *
+ * `z.string().url()` acepta cualquier esquema (`javascript:`, `data:`…), y un
+ * valor así se ejecutaría al pintarse en un `href`; por eso se restringe.
+ */
+const httpUrl = (message: string) =>
+  z.string().trim().url(message).refine(isHttpUrl, message);
 
 export const eventPhotoInputSchema = z.object({
   /** Presente solo en fotos que ya existen en la base de datos. */
   id: z.string().min(1).optional(),
-  url: z.string().trim().url("La URL de la foto no es válida"),
+  url: httpUrl("La URL de la foto no es válida"),
   cloudinaryId: z.string().trim().min(1, "Falta el identificador de Cloudinary"),
 });
 
@@ -22,7 +32,7 @@ const optionalText = (max: number, message: string) =>
  * cuando el anfitrión deja el campo en blanco (se guarda como `null`).
  */
 const optionalUrl = (message: string) =>
-  z.union([z.string().trim().url(message), z.literal("")]).optional();
+  z.union([httpUrl(message), z.literal("")]).optional();
 
 /**
  * Formulario de creación/edición de evento.

@@ -9,14 +9,24 @@ import { formatShortDateTime } from "@/lib/format";
 /** Excel (y LibreOffice) interpretan bien el UTF-8 si el archivo empieza con BOM. */
 export const CSV_BOM = "\uFEFF";
 
+/**
+ * Prefijos que Excel, LibreOffice y Google Sheets interpretan como fórmula.
+ * Un nombre o un mensaje escrito por un invitado podría empezar por `=` y
+ * ejecutarse al abrir el CSV (CWE-1236), así que se neutraliza.
+ */
+const CSV_FORMULA_PREFIX = /^[=+\-@\t\r]/;
+
 export function escapeCsvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
   const text = String(value);
+  // El apóstrofe inicial marca la celda como texto y las hojas de cálculo lo
+  // ocultan: el anfitrión sigue viendo el valor original.
+  const safe = CSV_FORMULA_PREFIX.test(text) ? `'${text}` : text;
   // Se entrecomilla si contiene separador, comillas o saltos de línea.
-  if (/[",\r\n]/.test(text)) {
-    return `"${text.replace(/"/g, '""')}"`;
+  if (/[",\r\n]/.test(safe)) {
+    return `"${safe.replace(/"/g, '""')}"`;
   }
-  return text;
+  return safe;
 }
 
 export function toCsv(rows: readonly (readonly unknown[])[]): string {
