@@ -7,13 +7,20 @@ services:
     plan: starter
     region: oregon
     branch: main
-    # No hay carpeta `prisma/migrations/`, así que el schema se sincroniza con
-    # `prisma db push` (contra la connection string DIRECTA de Neon) en lugar de
-    # `migrate deploy`. `--accept-data-loss` es necesario para eliminar la tabla
-    # `MagicLinkToken`, que ya no se usa.
+    # El esquema vive versionado en `prisma/migrations/` y se aplica con
+    # `prisma migrate deploy` (contra la connection string DIRECTA de Neon), que
+    # es idempotente y no destructivo: ya no hay `prisma db push
+    # --accept-data-loss` en cada deploy. `0_init` es el baseline del esquema que
+    # ya existía en producción, así que allí hay que marcarlo como aplicado una
+    # sola vez (`npx prisma migrate resolve --applied 0_init`).
+    # `npm ci` (no `npm install`) instala exactamente lo que fija el lockfile y
+    # `--include=dev` garantiza las herramientas del build (prisma, tsx,
+    # typescript, vitest) aunque el entorno llegue con NODE_ENV=production.
+    # Antes de compilar se pasa la misma puerta de calidad que en local
+    # (typecheck, lint y tests): si algo falla, el deploy no se publica.
     # El seed de fondos demo es idempotente (upsert por id), así que puede correr
     # en cada deploy sin duplicar filas.
-    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed:backgrounds && npm run build
+    buildCommand: npm ci --include=dev && npx prisma generate && npx prisma migrate deploy && npm run db:seed:backgrounds && npm run typecheck && npm run lint && npm test && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     autoDeploy: true

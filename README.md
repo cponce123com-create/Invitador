@@ -58,15 +58,15 @@ indicando, si quiere, hasta N acompañantes con su relación.
 ## Setup local
 
 ```bash
-# 1. Instalar dependencias (el postinstall genera el cliente de Prisma)
-npm install
+# 1. Instalar dependencias tal cual el lockfile (el postinstall genera el cliente)
+npm ci
 
 # 2. Configurar variables de entorno
 cp .env.example .env
 # ... y rellenar los valores (ver tabla más abajo)
 
-# 3. Aplicar el schema a la base de datos
-npm run db:push        # o: npm run db:migrate  (crea una migración)
+# 3. Aplicar las migraciones versionadas a la base de datos
+npm run db:deploy      # = npx prisma migrate deploy
 
 # 4. Sembrar el catálogo de fondos demo (idempotente)
 npm run db:seed:backgrounds
@@ -74,6 +74,12 @@ npm run db:seed:backgrounds
 # 5. Arrancar en desarrollo
 npm run dev            # http://localhost:3000
 ```
+
+> `prisma/migrations/` está versionado y `0_init` es el baseline del esquema
+> completo. Para cambiar el esquema, usa
+> `npm run db:migrate -- --name lo-que-sea` (crea y aplica la migración en
+> local); `npm run db:push` queda solo para prototipar contra una base
+> desechable, porque no deja historial ni permite volver atrás.
 
 ### Crear la primera cuenta
 
@@ -116,25 +122,39 @@ administrador. Después entra a **Usuarios** en el panel para crear el resto.
 El archivo [`render.yaml`](./render.yaml) describe el servicio. Los comandos son:
 
 - **Build command**
-  `npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed:backgrounds && npm run build`
+  `npm ci --include=dev && npx prisma generate && npx prisma migrate deploy && npm run db:seed:backgrounds && npm run typecheck && npm run lint && npm test && npm run build`
 - **Start command**: `npm run start`
 - **Health check**: `GET /api/health`
 
-> El proyecto no incluye `prisma/migrations/`, por eso el build usa
-> `prisma db push` (sincroniza el schema directamente) en lugar de
-> `prisma migrate deploy`. Si más adelante quieres migraciones versionadas,
-> ejecuta `npm run db:migrate -- --name init` en local, sube la carpeta
-> `prisma/migrations/` y cambia el comando del build por
-> `npx prisma migrate deploy`.
+> **Migraciones**: el esquema está versionado en `prisma/migrations/` y se aplica
+> con `prisma migrate deploy` (contra `DIRECT_URL`), que es idempotente y no
+> destructivo. `0_init` es el baseline del esquema que ya existía en la base de
+> producción, así que **la primera vez hay que marcarlo como aplicado** (una sola
+> vez, con la `DIRECT_URL` de producción):
+>
+> ```bash
+> npx prisma migrate resolve --applied 0_init
+> npx prisma migrate diff --from-url "$DIRECT_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+> ```
+>
+> El primer comando solo escribe la fila de `0_init` en `_prisma_migrations` (no
+> toca tablas ni datos) y el segundo comprueba que la base y el esquema coinciden:
+> debe terminar con código 0.
+>
+> **Puerta de calidad**: antes de compilar, el build corre `typecheck`, `lint` y
+> los tests; si alguno falla, el deploy no se publica. `npm ci --include=dev`
+> instala exactamente lo que fija el lockfile y garantiza las herramientas del
+> build (`prisma`, `tsx`, `typescript`, `vitest`) aunque el entorno llegue con
+> `NODE_ENV=production`.
 >
 > `npm run db:seed:backgrounds` siembra las plantillas de fondos demo. Es
 > idempotente (upsert por id), así que puede correr en cada deploy sin duplicar
-> filas. El runner (`tsx`) está en `devDependencies`, que Render instala durante
-> el build.
+> filas.
 
 Configura las variables de entorno de la tabla anterior en el panel de Render.
 En producción usa siempre la connection string **pooled** de Neon en
-`DATABASE_URL` y la **directa** en `DIRECT_URL`.
+`DATABASE_URL` y la **directa** en `DIRECT_URL`. En `.env.example` cada bloque
+indica si es solo de servidor, obligatorio en producción u opcional.
 
 ## Estructura
 
@@ -196,6 +216,31 @@ tests/                             Tests de la lógica pura
   de animación y las secciones aparecen directamente en su estado final. La
   vista previa del dashboard reutiliza `EventHero` sin animación, así que el
   panel del anfitrión no carga ningún efecto.
+
+## Seguridad, límites y tests
+
+- **Rate limiting**: `lib/rate-limit.ts` limita la confirmación pública, la
+  subida de comprobantes, el login (por IP + email), la firma de subidas y el
+  alta del primer super admin. Con `UPSTASH_REDIS_REST_*` configurado el límite
+  es compartido entre instancias; sin esas variables cae a un limitador en
+  memoria (uno por proceso).
+- **Sesión revalidada**: la sesión es un JWT, pero `getCurrentHost` vuelve a
+  consultar el host en cada petición, así que borrar o degradar una cuenta surte
+  efecto de inmediato (no hay que esperar a que caduque el token).
+- **Cabeceras y CSRF**: `next.config.mjs` aplica CSP y cabeceras de seguridad
+  (nosniff, anti-framing, Referrer-Policy, Permissions-Policy, HSTS) a todas las
+  respuestas, y los endpoints mutantes rechazan las peticiones que vienen de otro
+  origen (`Sec-Fetch-Site`/`Origin`). Los endpoints públicos de la invitación
+  quedan fuera a propósito.
+- **Assets de Cloudinary**: las fotos de un evento solo se aceptan —y solo se
+  destruyen— si viven en la carpeta `invitador/<hostId>/`, y los comprobantes en
+  `invitador/regalos/<eventId>/`.
+- **Tests**: `npm test` (Vitest, entorno node) cubre la lógica pura y de dominio
+  —fechas, slugs, CSV, validaciones, rate limiting, imágenes, temas, partículas
+  y presupuesto de render— más contratos de autorización multi-tenant, del alta
+  del super admin y del rechazo por origen cruzado, con Prisma y Cloudinary
+  simulados. No hay tests de componentes ni contra una base real: el flujo
+  completo (login, subida de fotos, invitados) se comprueba en producción.
 
 ## Fondos demo: cómo agregar uno nuevo
 
