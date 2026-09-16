@@ -81,6 +81,11 @@ model Event {
   customLabel          String? // ej: "Baby Shower de Sofía" o para tipo OTRO
   ageOrDetail          String? // ej: "Cumple 5 años" — texto libre para flexibilidad
   eventDate            DateTime?
+  /// Cierre de la lista de invitados (opcional). Se guarda como "hora de pared"
+  /// (misma convención que `eventDate`): la cuenta regresiva de la invitación y
+  /// el rechazo de confirmaciones tardías lo interpretan en la zona horaria de la
+  /// plataforma (`EVENT_TIME_ZONE`). Sin fecha, la lista no se cierra sola.
+  rsvpDeadline         DateTime?
   location             String?
   /// Foto del lugar de la celebración (opcional). Es independiente de la
   /// galería: no consume el cupo de fotos ni se borra al editar las fotos.

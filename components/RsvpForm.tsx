@@ -40,6 +40,11 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
   const successRef = useRef<HTMLDivElement | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<RsvpFormValues["attendance"] | null>(null);
+  // Nombres ya registrados que se parecen al que se está enviando. Mientras no
+  // se confirme, la confirmación no se crea.
+  const [duplicateNames, setDuplicateNames] = useState<string[] | null>(null);
+  const pendingValues = useRef<RsvpFormValues | null>(null);
+  const [busy, setBusy] = useState(false);
 
   // Fuera de la invitación animada `burstFrom` no hace nada, así que este efecto
   // no necesita saber si hay confeti disponible.
@@ -67,8 +72,9 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
   const attendance = watch("attendance");
   const canAddGuest = fields.length < maxGuestsPerRsvp;
 
-  const onSubmit = handleSubmit(async (values) => {
+  async function submit(values: RsvpFormValues, confirmDuplicate: boolean) {
     setServerError(null);
+    setBusy(true);
     try {
       const response = await fetch("/api/rsvp", {
         method: "POST",
@@ -76,23 +82,48 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
         body: JSON.stringify({
           ...values,
           eventId,
+          confirmDuplicate,
           // Si no asiste, los acompañantes no se guardan.
           additionalGuests: values.attendance === "SI" ? values.additionalGuests : [],
         }),
       });
       const payload = await response.json().catch(() => null);
 
+      // El servidor detectó un posible duplicado: se pide confirmación y se
+      // recuerda lo que la persona escribió para poder reenviarlo tal cual.
+      if (response.status === 409 && Array.isArray(payload?.duplicates)) {
+        pendingValues.current = values;
+        setDuplicateNames(payload.duplicates as string[]);
+        return;
+      }
+
       if (!response.ok) {
         setServerError(payload?.error ?? "No pudimos guardar tu confirmación.");
         return;
       }
 
+      setDuplicateNames(null);
+      pendingValues.current = null;
       setConfirmed(values.attendance);
       reset(emptyValues(eventId));
     } catch {
       setServerError("Revisa tu conexión e intenta de nuevo.");
+    } finally {
+      setBusy(false);
     }
-  });
+  }
+
+  const onSubmit = handleSubmit((values) => submit(values, false));
+
+  function confirmDuplicateSubmit() {
+    const values = pendingValues.current;
+    if (values) void submit(values, true);
+  }
+
+  function dismissDuplicate() {
+    setDuplicateNames(null);
+    pendingValues.current = null;
+  }
 
   if (confirmed) {
     return (
@@ -236,12 +267,54 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
         {errors.message ? <p role="alert" className={errorClass}>{errors.message.message}</p> : null}
       </div>
 
+      {duplicateNames ? (
+        <div
+          role="alert"
+          className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900"
+        >
+          <p className="font-semibold">
+            Ya existe una confirmación con un nombre muy parecido:
+          </p>
+          <ul className="list-disc space-y-0.5 pl-5">
+            {duplicateNames.map((name, index) => (
+              <li key={`${name}-${index}`}>{name}</li>
+            ))}
+          </ul>
+          <p>
+            Si eres otra persona, puedes enviar tu confirmación igual. Si te
+            equivocaste al escribir, corrige tu nombre arriba.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={primaryButtonClass}
+              disabled={busy}
+              onClick={confirmDuplicateSubmit}
+            >
+              {busy ? "Enviando…" : "Sí, soy otra persona"}
+            </button>
+            <button
+              type="button"
+              className={secondaryButtonClass}
+              disabled={busy}
+              onClick={dismissDuplicate}
+            >
+              Corregir mi nombre
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {serverError ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{serverError}</p>
       ) : null}
 
-      <button type="submit" className={`${primaryButtonClass} w-full`} disabled={isSubmitting}>
-        {isSubmitting ? "Enviando…" : "Enviar confirmación"}
+      <button
+        type="submit"
+        className={`${primaryButtonClass} w-full`}
+        disabled={isSubmitting || busy}
+      >
+        {isSubmitting || busy ? "Enviando…" : "Enviar confirmación"}
       </button>
     </form>
   );

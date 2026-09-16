@@ -27,6 +27,7 @@ export default async function EditEventPage({ params }: PageProps) {
     customLabel: event.customLabel ?? "",
     ageOrDetail: event.ageOrDetail ?? "",
     eventDate: toWallClockInputValue(event.eventDate),
+    rsvpDeadline: toWallClockInputValue(event.rsvpDeadline),
     location: event.location ?? "",
     locationImageUrl: event.locationImageUrl ?? "",
     mapUrl: event.mapUrl ?? "",

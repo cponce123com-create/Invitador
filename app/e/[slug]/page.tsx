@@ -8,11 +8,11 @@ import { GiftProofForm } from "@/components/invitation/GiftProofForm";
 import { InvitationShell } from "@/components/invitation/InvitationShell";
 import { PhotoWall } from "@/components/invitation/PhotoWall";
 import { Reveal } from "@/components/invitation/Reveal";
+import { RsvpSection } from "@/components/invitation/RsvpSection";
 import { VenueCard } from "@/components/invitation/VenueCard";
-import { RsvpForm } from "@/components/RsvpForm";
 import { getEventTypeLabel } from "@/lib/constants";
 import { getPublicEventBySlug } from "@/lib/events";
-import { formatEventDate } from "@/lib/format";
+import { formatEventDate, wallClockToInstant } from "@/lib/format";
 import { socialImageUrl } from "@/lib/images";
 import { getInvitationTheme } from "@/lib/invitation-theme";
 import { cardClass } from "@/lib/ui";
@@ -67,6 +67,11 @@ export default async function PublicEventPage({ params }: PageProps) {
   const typeLabel = getEventTypeLabel(event.type, event.customLabel);
   const dateLabel = formatEventDate(event.eventDate);
   const theme = getInvitationTheme(event.type);
+
+  // El cierre de la lista se guarda como "hora de pared": se convierte al
+  // instante real para que la cuenta regresiva compare contra el reloj.
+  const deadlineInstant = wallClockToInstant(event.rsvpDeadline);
+  const deadlineLabel = formatEventDate(event.rsvpDeadline);
 
   return (
     <InvitationShell theme={theme}>
@@ -132,9 +137,16 @@ export default async function PublicEventPage({ params }: PageProps) {
         ) : null}
 
         <Reveal delay={80}>
-          <RsvpForm
+          <RsvpSection
             eventId={event.id}
             maxGuestsPerRsvp={event.maxGuestsPerRsvp}
+            deadlineIso={deadlineInstant ? deadlineInstant.toISOString() : null}
+            deadlineLabel={deadlineLabel}
+            initialRemainingMs={
+              deadlineInstant
+                ? Math.max(0, deadlineInstant.getTime() - Date.now())
+                : 0
+            }
           />
         </Reveal>
 

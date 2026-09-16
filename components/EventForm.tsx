@@ -95,6 +95,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
       customLabel: values.customLabel ?? "",
       ageOrDetail: values.ageOrDetail ?? "",
       eventDate: values.eventDate ?? "",
+      rsvpDeadline: values.rsvpDeadline ?? "",
       location: values.location ?? "",
       locationImageUrl: values.locationImageUrl ?? "",
       mapUrl: values.mapUrl ?? "",
@@ -458,6 +459,30 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
 
       <section className={`${cardClass} space-y-5`}>
         <h2 className="text-base font-bold text-slate-900">Invitados</h2>
+
+        <div className="sm:max-w-xs">
+          <label htmlFor="rsvpDeadline" className={labelClass}>
+            Cierre de la lista{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </label>
+          <input
+            id="rsvpDeadline"
+            type="datetime-local"
+            className={inputClass}
+            aria-invalid={Boolean(errors.rsvpDeadline)}
+            {...register("rsvpDeadline")}
+          />
+          <p className={helpClass}>
+            Hasta cuándo se aceptan confirmaciones. La invitación muestra una
+            cuenta regresiva y, al cumplirse, deja de aceptar respuestas. Déjalo
+            vacío para no cerrar la lista.
+          </p>
+          {errors.rsvpDeadline ? (
+            <p role="alert" className={errorClass}>
+              {errors.rsvpDeadline.message}
+            </p>
+          ) : null}
+        </div>
 
         <div className="sm:max-w-xs">
           <label htmlFor="maxGuestsPerRsvp" className={labelClass}>

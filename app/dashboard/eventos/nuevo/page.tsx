@@ -15,6 +15,7 @@ const initialValues: EventFormValues = {
   customLabel: "",
   ageOrDetail: "",
   eventDate: "",
+  rsvpDeadline: "",
   location: "",
   locationImageUrl: "",
   mapUrl: "",

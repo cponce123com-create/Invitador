@@ -37,6 +37,7 @@ export function toEventScalarData(values: EventFormValues) {
     customLabel: emptyToNull(values.customLabel),
     ageOrDetail: emptyToNull(values.ageOrDetail),
     eventDate: toEventDate(values.eventDate),
+    rsvpDeadline: toEventDate(values.rsvpDeadline),
     location: emptyToNull(values.location),
     locationImageUrl: emptyToNull(values.locationImageUrl),
     mapUrl: emptyToNull(values.mapUrl),

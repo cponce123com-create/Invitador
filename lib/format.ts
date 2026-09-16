@@ -1,12 +1,20 @@
-import type {
-  AttendanceStatusValue,
-  GuestRelationValue,
+import {
+  EVENT_TIME_ZONE,
+  type AttendanceStatusValue,
+  type GuestRelationValue,
 } from "@/lib/constants";
 
-// Las fechas de evento se guardan como "hora de pared" (wall clock) codificada
-// en UTC: el anfitrión escribe "5:00 p.m." y queremos que todos los invitados
-// vean exactamente "5:00 p.m.", sin importar la zona horaria del servidor
-// (Render corre en UTC). Por eso parseamos y formateamos siempre con `timeZone: "UTC"`.
+// En la app conviven dos clases de fechas y se tratan distinto:
+//
+// 1. FECHAS DE PARED (fecha y hora del evento, cierre de la lista). El anfitrión
+//    escribe "5:00 p.m." y queremos que TODOS los invitados vean exactamente
+//    "5:00 p.m.", sin importar su zona horaria. Por eso se guardan codificadas en
+//    UTC (componentes de pared) y se parsean/formatean con `timeZone: "UTC"`.
+//
+// 2. INSTANTES REALES (cuándo se registró una confirmación, cuándo se subió un
+//    comprobante). Son momentos absolutos y se muestran en la zona de referencia
+//    de la plataforma (`EVENT_TIME_ZONE`, hora de Perú). Para saber en qué
+//    momento ocurre una fecha de pared se usa `wallClockToInstant`.
 
 const WALL_CLOCK_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
 
@@ -27,13 +35,26 @@ const LONG_DATE = new Intl.DateTimeFormat("es-419", {
   timeZone: "UTC",
 });
 
+/** Instantes reales: se pintan en la zona de referencia de la plataforma. */
 const SHORT_DATE_TIME = new Intl.DateTimeFormat("es-419", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit",
-  timeZone: "UTC",
+  timeZone: EVENT_TIME_ZONE,
+});
+
+/** Componentes de pared de la zona de referencia, para calcular su desfase. */
+const WALL_CLOCK_PARTS = new Intl.DateTimeFormat("en-US", {
+  timeZone: EVENT_TIME_ZONE,
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
 });
 
 function capitalize(value: string): string {
@@ -74,7 +95,10 @@ export function formatLongDate(date: Date | string | null | undefined): string |
   return LONG_DATE.format(parsed);
 }
 
-/** ej: "05/07/2026, 17:00" — usado en tablas del dashboard. */
+/**
+ * ej: "05/07/2026, 12:00" — instantes reales (confirmaciones, comprobantes) en la
+ * hora de la zona de referencia; se usa en las tablas del dashboard y los CSV.
+ */
 export function formatShortDateTime(date: Date | string | null | undefined): string {
   if (!date) return "—";
   const parsed = typeof date === "string" ? new Date(date) : date;
@@ -88,6 +112,55 @@ export function isPastEvent(date: Date | string | null | undefined): boolean {
   const parsed = typeof date === "string" ? new Date(date) : date;
   if (Number.isNaN(parsed.getTime())) return false;
   return parsed.getTime() < Date.now();
+}
+
+/**
+ * Desfase de la zona de referencia respecto a UTC (en ms) para un instante.
+ * Se obtiene restando los componentes que ve la zona a los del mismo instante en
+ * UTC. Para "America/Lima" (sin horario de verano) es -5 h.
+ */
+function timeZoneOffsetMs(date: Date): number {
+  const fields: Record<string, string> = {};
+  for (const part of WALL_CLOCK_PARTS.formatToParts(date)) {
+    if (part.type !== "literal") fields[part.type] = part.value;
+  }
+  const asUtc = Date.UTC(
+    Number(fields.year),
+    Number(fields.month) - 1,
+    Number(fields.day),
+    Number(fields.hour === "24" ? "00" : fields.hour),
+    Number(fields.minute),
+    Number(fields.second),
+  );
+  return asUtc - date.getTime();
+}
+
+/**
+ * Convierte una fecha guardada como "hora de pared" (componentes en UTC) en el
+ * instante real que representa esa hora en la zona de referencia.
+ *
+ * Ej: `2026-09-25T22:00:00Z` → `2026-09-26T03:00:00Z`, las 10 de la noche del 25
+ * en Perú.
+ */
+export function wallClockToInstant(
+  value: Date | string | null | undefined,
+): Date | null {
+  if (!value) return null;
+  const wallClock = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(wallClock.getTime())) return null;
+  return new Date(wallClock.getTime() - timeZoneOffsetMs(wallClock));
+}
+
+/**
+ * `true` si una fecha de pared ya pasó. Se usa para cerrar la lista de
+ * invitados; acepta `now` para poder probarlo sin depender del reloj real.
+ */
+export function isWallClockPast(
+  value: Date | string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  const instant = wallClockToInstant(value);
+  return instant !== null && instant.getTime() <= now.getTime();
 }
 
 export function formatGuestSummary(

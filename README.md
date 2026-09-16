@@ -30,8 +30,9 @@ indicando, si quiere, hasta N acompañantes con su relación.
   al resto de usuarios con email y contraseña. Un anfitrión solo ve y edita sus
   propios eventos.
 - **Crear/editar evento** en `/dashboard/eventos/nuevo` y `.../[id]/editar`:
-  título, tipo, detalle libre, fecha y hora, ubicación, descripción, fotos
-  (con portada) y el tope de acompañantes por confirmación.
+  título, tipo, detalle libre, fecha y hora, **cierre de la lista** (opcional),
+  ubicación, descripción, fotos (con portada) y el tope de acompañantes por
+  confirmación.
 - **Código de vestimenta** (opcional): una foto de referencia que el anfitrión
   sube como casilla aparte. En la invitación se muestra como una tarjeta
   ampliable; sin foto, no se renderiza.
@@ -42,6 +43,15 @@ indicando, si quiere, hasta N acompañantes con su relación.
   dinámicos para que el link se vea bien en WhatsApp.
 - **RSVP** en `/e/[slug]` con botones Sí / No / Tal vez y una lista dinámica de
   acompañantes (nombre + relación), validada con Zod en cliente y servidor.
+- **Cierre de la lista (opcional)**: si el anfitrión define una fecha de cierre,
+  la invitación muestra una **cuenta regresiva** (días / horas / minutos /
+  segundos) en hora de Perú. Al llegar a cero el formulario se oculta y la API
+  rechaza las confirmaciones nuevas con `403`. Sin fecha, la lista no se cierra
+  sola.
+- **Aviso de invitado repetido**: al confirmar, el servidor compara el nombre con
+  los ya registrados —sin acentos ni mayúsculas y tolerante a erratas— y, si
+  encuentra uno muy parecido, pide confirmación antes de guardar para evitar
+  duplicar al invitado principal.
 - **Dashboard del evento** en `/dashboard/eventos/[id]`: resumen de
   confirmaciones y total de personas, tabla de RSVPs, **export a CSV**, publicar
   o desactivar la invitación y eliminar el evento.
@@ -189,10 +199,13 @@ tests/                             Tests de la lógica pura
 
 ## Notas de diseño
 
-- **Fechas como "hora de pared"**: la fecha del evento se guarda codificada en
-  UTC para que todos los invitados vean exactamente la hora que escribió el
-  anfitrión, sin importar su zona horaria (Render corre en UTC). Ver
-  `lib/format.ts`.
+- **Dos clases de fecha**: la fecha del evento y el cierre de la lista se
+  guardan como **"hora de pared"** codificada en UTC, para que todos los
+  invitados vean exactamente la hora que escribió el anfitrión, sin importar su
+  zona horaria (Render corre en UTC). Los **instantes reales** (`createdAt` de
+  las confirmaciones, los comprobantes de regalo y las cuentas) se muestran en
+  `EVENT_TIME_ZONE` (`America/Lima`), así que el "confirmado el …" coincide con
+  el reloj del anfitrión. Ver `lib/format.ts`.
 - **Tope de acompañantes por evento**: `Event.maxGuestsPerRsvp` es un dato, no
   una constante del frontend. Si un evento necesita permitir más invitados
   adicionales, no hay que tocar código.

@@ -35,6 +35,22 @@ const optionalUrl = (message: string) =>
   z.union([httpUrl(message), z.literal("")]).optional();
 
 /**
+ * Fecha-hora del selector del formulario. Acepta la cadena vacía (campo
+ * opcional) y exige el formato de "hora de pared" que produce
+ * `<input type="datetime-local">`: así nadie envía una fecha con offset y se
+ * muestra una hora distinta a la que el anfitrión escribió.
+ */
+const wallClockInput = () =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (value) => !value || parseWallClockInput(value) !== null,
+      "Usa el selector de fecha y hora del formulario",
+    );
+
+/**
  * Formulario de creación/edición de evento.
  *
  * Los campos se validan como strings porque es lo que produce un formulario
@@ -52,17 +68,10 @@ export const eventFormSchema = z.object({
   }),
   customLabel: optionalText(120, "Máximo 120 caracteres"),
   ageOrDetail: optionalText(120, "Máximo 120 caracteres"),
-  // La fecha se guarda como "hora de pared": se exige el formato que produce
-  // `<input type="datetime-local">` para que nadie envíe una fecha con offset
-  // y se muestre una hora distinta a la que el anfitrión escribió.
-  eventDate: z
-    .string()
-    .trim()
-    .optional()
-    .refine(
-      (value) => !value || parseWallClockInput(value) !== null,
-      "Usa el selector de fecha y hora del formulario",
-    ),
+  eventDate: wallClockInput(),
+  // Cierre de la lista de invitados: la invitación muestra una cuenta regresiva
+  // y, al cumplirse, deja de aceptar confirmaciones. Vacío = no se cierra sola.
+  rsvpDeadline: wallClockInput(),
   location: optionalText(200, "Máximo 200 caracteres"),
   // Foto del lugar y link de Google Maps: opcionales. Si ambos están vacíos, la
   // invitación no muestra la tarjeta «El lugar».

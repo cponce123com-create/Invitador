@@ -39,6 +39,7 @@ const formValues: EventFormValues = {
   customLabel: "",
   ageOrDetail: "",
   eventDate: "",
+  rsvpDeadline: "",
   location: "Salón Los Jardines",
   locationImageUrl: "",
   mapUrl: "",
@@ -99,6 +100,17 @@ describe("toEventScalarData", () => {
     expect(data.dressCodeImageUrl).toBe(
       "https://res.cloudinary.com/demo/image/upload/vestimenta.jpg",
     );
+  });
+
+  it("guarda null sin cierre de lista y lo convierte cuando se define", () => {
+    expect(toEventScalarData(formValues).rsvpDeadline).toBeNull();
+
+    const data = toEventScalarData({
+      ...formValues,
+      rsvpDeadline: "2026-09-25T22:00",
+    });
+
+    expect(data.rsvpDeadline?.toISOString()).toBe("2026-09-25T22:00:00.000Z");
   });
 });
 

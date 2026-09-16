@@ -105,6 +105,24 @@ describe("eventFormSchema", () => {
     ).toBe(false);
   });
 
+  it("acepta el cierre de la lista con el formato del selector", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        rsvpDeadline: "2026-09-25T22:00",
+      }).success,
+    ).toBe(true);
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, rsvpDeadline: "" }).success,
+    ).toBe(true);
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        rsvpDeadline: "2026-09-25T22:00:00Z",
+      }).success,
+    ).toBe(false);
+  });
+
   it("limita el número de acompañantes", () => {
     expect(
       eventFormSchema.safeParse({ ...eventBase, maxGuestsPerRsvp: 999 }).success,

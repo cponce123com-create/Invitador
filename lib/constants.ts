@@ -113,6 +113,16 @@ export const MAX_EVENT_PHOTOS = 30;
 /** Longitud máxima del texto que acompaña al QR de la mesa de regalos. */
 export const MAX_GIFT_MESSAGE = 300;
 
+/**
+ * Zona horaria de referencia de la plataforma (hora de Perú, UTC-5).
+ *
+ * Las fechas del evento se guardan como "hora de pared" y se muestran iguales
+ * para todos los invitados. En cambio los INSTANTES reales —cuándo se registró
+ * una confirmación, cuándo cierra la lista de invitados— se calculan y se
+ * muestran en esta zona.
+ */
+export const EVENT_TIME_ZONE = "America/Lima";
+
 /** id del proveedor de Auth.js basado en email + contraseña. */
 export const CREDENTIALS_PROVIDER_ID = "credentials";
 

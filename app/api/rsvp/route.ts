@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
 import { emptyToNull } from "@/lib/events";
+import { isWallClockPast } from "@/lib/format";
 import { getClientIp } from "@/lib/http";
+import { findSimilarNames } from "@/lib/names";
 import { prisma } from "@/lib/prisma";
 import { checkRsvpRateLimit } from "@/lib/rate-limit";
 import { createRsvpSchema } from "@/lib/validations/rsvp";
@@ -15,7 +17,9 @@ export const runtime = "nodejs";
  * No requiere sesión (cualquiera con el link puede confirmar), así que:
  *  - se limita por IP para evitar spam;
  *  - solo acepta eventos activos;
- *  - el tope de acompañantes sale del propio evento, no del cliente.
+ *  - el tope de acompañantes sale del propio evento, no del cliente;
+ *  - si la lista tiene fecha de cierre y ya pasó, rechaza la confirmación;
+ *  - avisa de un posible duplicado antes de crear la fila (el invitado decide).
  */
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -40,11 +44,20 @@ export async function POST(request: Request) {
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    select: { id: true, isActive: true, maxGuestsPerRsvp: true },
+    select: {
+      id: true,
+      isActive: true,
+      maxGuestsPerRsvp: true,
+      rsvpDeadline: true,
+    },
   });
 
   if (!event || !event.isActive) {
     return jsonError("El evento no existe o ya no acepta confirmaciones", 404);
+  }
+
+  if (isWallClockPast(event.rsvpDeadline)) {
+    return jsonError("La lista de invitados ya cerró.", 403);
   }
 
   // Normalizamos antes de validar para no fallar si el cliente omite el arreglo.
@@ -55,6 +68,30 @@ export async function POST(request: Request) {
   if (!parsed.success) return zodErrorResponse(parsed.error);
 
   const values = parsed.data;
+
+  // Aviso de duplicado: si ya hay un invitado principal con un nombre muy
+  // parecido, se pide confirmación antes de registrar. `confirmDuplicate` lo
+  // envía el formulario solo cuando la persona ya vio el aviso.
+  if (raw.confirmDuplicate !== true) {
+    const existing = await prisma.rsvp.findMany({
+      where: { eventId: event.id },
+      select: { mainGuestName: true },
+    });
+    const duplicates = findSimilarNames(
+      values.mainGuestName,
+      existing.map((rsvp) => rsvp.mainGuestName),
+    );
+    if (duplicates.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Ya existe una confirmación con un nombre muy parecido.",
+          duplicates,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   // Si la persona no asiste, sus acompañantes no cuentan para nada.
   const additionalGuests =
     values.attendance === "SI" ? values.additionalGuests : [];
