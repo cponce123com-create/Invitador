@@ -5,33 +5,25 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Lightbox } from "@/components/invitation/Lightbox";
 import { formatShortDateTime } from "@/lib/format";
+import type { GiftProofSummary } from "@/lib/gift-proofs";
 import { optimizedImageUrl } from "@/lib/images";
-import { dangerButtonClass } from "@/lib/ui";
-
-/** Comprobante tal como lo necesita la tarjeta del panel. */
-export type GiftProofItem = {
-  id: string;
-  senderName: string;
-  note: string | null;
-  url: string;
-  createdAt: Date;
-};
+import { dangerButtonClass, ghostButtonClass } from "@/lib/ui";
 
 /**
- * Lista de comprobantes recibidos en el panel del anfitrión: miniatura que abre
- * el visor (el mismo del muro de fotos), quién lo envió, su nota y la fecha de
- * subida, con un botón para quitarlo.
+ * Lista de comprobantes recibidos en el panel del anfitrión: miniatura y enlace
+ * «Ver comprobante» que abren el visor (el mismo del muro de fotos), quién lo
+ * envió, su nota y la fecha de subida, con un botón para quitarlo.
  *
  * El borrado pasa por la API (solo el dueño del evento puede hacerlo) y después
  * se refresca la ruta para que el contador y la lista vuelvan a leer de la base.
  */
-export function GiftProofList({ proofs }: { proofs: GiftProofItem[] }) {
+export function GiftProofList({ proofs }: { proofs: GiftProofSummary[] }) {
   const router = useRouter();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleDelete(proof: GiftProofItem) {
+  async function handleDelete(proof: GiftProofSummary) {
     const confirmed = window.confirm(
       `¿Quitar el comprobante de ${proof.senderName}? Se borrará también la imagen. Esta acción no se puede deshacer.`,
     );
@@ -96,14 +88,23 @@ export function GiftProofList({ proofs }: { proofs: GiftProofItem[] }) {
               <p className="text-xs text-slate-400">
                 {formatShortDateTime(proof.createdAt)}
               </p>
-              <button
-                type="button"
-                className={dangerButtonClass}
-                disabled={deletingId === proof.id}
-                onClick={() => void handleDelete(proof)}
-              >
-                {deletingId === proof.id ? "Quitando…" : "Quitar"}
-              </button>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  className={ghostButtonClass}
+                  onClick={() => setOpenIndex(index)}
+                >
+                  Ver comprobante
+                </button>
+                <button
+                  type="button"
+                  className={dangerButtonClass}
+                  disabled={deletingId === proof.id}
+                  onClick={() => void handleDelete(proof)}
+                >
+                  {deletingId === proof.id ? "Quitando…" : "Quitar"}
+                </button>
+              </div>
             </div>
           </li>
         ))}

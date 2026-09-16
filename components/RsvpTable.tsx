@@ -1,3 +1,4 @@
+import { GiftProofButton } from "@/components/GiftProofButton";
 import {
   ATTENDANCE_BADGE_CLASSES,
   ATTENDANCE_SHORT_LABELS,
@@ -6,6 +7,7 @@ import {
   type GuestRelationValue,
 } from "@/lib/constants";
 import { formatShortDateTime } from "@/lib/format";
+import type { GiftProofSummary } from "@/lib/gift-proofs";
 import { cn } from "@/lib/ui";
 
 export type RsvpRow = {
@@ -16,6 +18,8 @@ export type RsvpRow = {
   message: string | null;
   createdAt: Date;
   additionalGuests: { id: string; name: string; relation: GuestRelationValue }[];
+  /** Comprobante de regalo del invitado, si subió alguno con el mismo nombre. */
+  giftProof?: GiftProofSummary | null;
 };
 
 function AttendanceBadge({ attendance }: { attendance: AttendanceStatusValue }) {
@@ -75,6 +79,13 @@ export function RsvpTable({ rsvps }: { rsvps: RsvpRow[] }) {
                 {rsvp.mainGuestPhone ? (
                   <p className="text-xs text-slate-500">{rsvp.mainGuestPhone}</p>
                 ) : null}
+                {rsvp.giftProof ? (
+                  <GiftProofButton
+                    proof={rsvp.giftProof}
+                    title={`Comprobante de ${rsvp.mainGuestName}`}
+                    className="mt-1"
+                  />
+                ) : null}
               </div>
               <AttendanceBadge attendance={rsvp.attendance} />
             </div>
@@ -110,6 +121,13 @@ export function RsvpTable({ rsvps }: { rsvps: RsvpRow[] }) {
                   <p className="font-medium text-slate-900">{rsvp.mainGuestName}</p>
                   {rsvp.mainGuestPhone ? (
                     <p className="text-xs text-slate-500">{rsvp.mainGuestPhone}</p>
+                  ) : null}
+                  {rsvp.giftProof ? (
+                    <GiftProofButton
+                      proof={rsvp.giftProof}
+                      title={`Comprobante de ${rsvp.mainGuestName}`}
+                      className="mt-1"
+                    />
                   ) : null}
                 </td>
                 <td className="px-3 py-3">

@@ -134,13 +134,6 @@ export function GiftProofForm({ eventId }: Props) {
         <p className="text-sm text-slate-600">
           El anfitrión ya tiene tu comprobante registrado.
         </p>
-        <button
-          type="button"
-          className={secondaryButtonClass}
-          onClick={() => setSent(false)}
-        >
-          Subir otro comprobante
-        </button>
       </div>
     );
   }

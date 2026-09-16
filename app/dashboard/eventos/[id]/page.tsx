@@ -10,6 +10,7 @@ import { StatsCards } from "@/components/StatsCards";
 import { EVENT_TYPE_EMOJI, getEventTypeLabel } from "@/lib/constants";
 import { computeEventStats, getHostEvent } from "@/lib/events";
 import { formatEventDate } from "@/lib/format";
+import { findGiftProofForGuest } from "@/lib/gift-proofs";
 import { getCurrentHost, requireHost } from "@/lib/session";
 import {
   cardClass,
@@ -40,6 +41,11 @@ export default async function EventDashboardPage({ params }: PageProps) {
   const stats = computeEventStats(event.rsvps);
   const typeLabel = getEventTypeLabel(event.type, event.customLabel);
   const dateLabel = formatEventDate(event.eventDate);
+  // Los comprobantes no están ligados a una confirmación: se cruzan por nombre.
+  const rsvpRows = event.rsvps.map((rsvp) => ({
+    ...rsvp,
+    giftProof: findGiftProofForGuest(rsvp.mainGuestName, event.giftProofs),
+  }));
 
   return (
     <div className="space-y-6">
@@ -89,7 +95,25 @@ export default async function EventDashboardPage({ params }: PageProps) {
             Exportar CSV
           </a>
         </div>
-        <RsvpTable rsvps={event.rsvps} />
+        <RsvpTable rsvps={rsvpRows} />
+      </section>
+
+      <section className={cardClass}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-bold text-slate-900">
+            Regalos recibidos{" "}
+            <span className="text-slate-400">({event.giftProofs.length})</span>
+          </h2>
+          {event.giftProofs.length > 0 ? (
+            <a
+              href={`/api/events/${event.id}/gift-proofs/export`}
+              className={secondaryButtonClass}
+            >
+              Exportar CSV
+            </a>
+          ) : null}
+        </div>
+        <GiftProofList proofs={event.giftProofs} />
       </section>
 
       <section className={`${cardClass} space-y-4`}>
