@@ -266,6 +266,23 @@ describe("eventFormSchema", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("acepta una melodía del catálogo, la cadena vacía o la ausencia", () => {
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, musicTrack: "CUMPLEANOS" })
+        .success,
+    ).toBe(true);
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, musicTrack: "" }).success,
+    ).toBe(true);
+    expect(eventFormSchema.safeParse(eventBase).success).toBe(true);
+  });
+
+  it("rechaza una melodía que no está en el catálogo", () => {
+    expect(
+      eventFormSchema.safeParse({ ...eventBase, musicTrack: "SILENCIO" }).success,
+    ).toBe(false);
+  });
 });
 
 describe("giftProofFormSchema", () => {

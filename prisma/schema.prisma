@@ -104,6 +104,11 @@ model Event {
   /// (opcional). Igual que la foto del lugar, es una casilla aparte: no gasta
   /// el cupo de la galería ni se borra al editar las fotos.
   dressCodeImageUrl    String?
+  /// Melodía de fondo de la invitación (opcional). Guarda el id de una pista de
+  /// `lib/music.ts`; las melodías se sintetizan en el navegador con la Web Audio
+  /// API, así que no hay ningún archivo que subir ni que borrar. `null` = sin
+  /// música.
+  musicTrack           String?
   backgroundTemplateId String?
   backgroundTemplate   BackgroundTemplate? @relation(fields: [backgroundTemplateId], references: [id], onDelete: SetNull)
   isActive             Boolean             @default(true)

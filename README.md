@@ -36,6 +36,10 @@ indicando, si quiere, hasta N acompañantes con su relación.
 - **Código de vestimenta** (opcional): una foto de referencia que el anfitrión
   sube como casilla aparte. En la invitación se muestra como una tarjeta
   ampliable; sin foto, no se renderiza.
+- **Música de fondo** (opcional): el anfitrión elige una melodía de un catálogo
+  (o «Sin música») y suena al abrir la invitación, con un botón para silenciarla
+  que recuerda la preferencia del invitado. Las melodías se **sintetizan en el
+  navegador** con la Web Audio API: no se sube ni se descarga ningún archivo.
 - **Página pública** en `/e/[slug]`, *mobile-first*: una experiencia animada
   (cortina de apertura, confeti y partículas temáticas según el tipo de evento,
   saludo escrito a máquina, Ken Burns + parallax en la portada y un muro de
@@ -209,6 +213,14 @@ tests/                             Tests de la lógica pura
 - **Tope de acompañantes por evento**: `Event.maxGuestsPerRsvp` es un dato, no
   una constante del frontend. Si un evento necesita permitir más invitados
   adicionales, no hay que tocar código.
+- **Música sin archivos**: las melodías de `lib/music.ts` son partituras escritas
+  en texto que `components/invitation/BackgroundMusic.tsx` convierte en
+  osciladores de la Web Audio API. No hay ningún `.mp3` que subir, no suma peso a
+  la página y no obliga a abrir `media-src` en la CSP, porque no se pide ningún
+  recurso externo. El audio arranca con el clic de «Abrir invitación»: los
+  navegadores exigen un gesto del usuario para reproducir sonido, así que la
+  música nunca suena sola. Con la pestaña oculta el contexto se suspende, de modo
+  que el bucle no se corta cuando el navegador estrangula los temporizadores.
 - **Subida firmada**: el `api_secret` de Cloudinary nunca llega al navegador;
   el backend genera una firma válida solo para una carpeta y un timestamp.
 - **Auth con contraseñas**: `Host.passwordHash` guarda el resultado de `scrypt`

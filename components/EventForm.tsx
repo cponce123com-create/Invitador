@@ -22,6 +22,7 @@ import {
   MAX_GUESTS_PER_RSVP_LIMIT,
 } from "@/lib/constants";
 import { formatEventDate, parseWallClockInput } from "@/lib/format";
+import { getMusicTrack, MUSIC_TRACKS } from "@/lib/music";
 import {
   cardClass,
   errorClass,
@@ -73,6 +74,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
     useBackgroundTemplates();
 
   const selectedType = watch("type");
+  const selectedTrack = getMusicTrack(watch("musicTrack"));
   const coverImageUrl = watch("coverImageUrl") ?? "";
   const isEdit = mode === "edit";
 
@@ -104,6 +106,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
       giftQrUrl: values.giftQrUrl ?? "",
       giftMessage: values.giftMessage ?? "",
       dressCodeImageUrl: values.dressCodeImageUrl ?? "",
+      musicTrack: values.musicTrack ?? "",
       backgroundTemplateId: values.backgroundTemplateId ?? "",
       photos: values.photos ?? [],
     };
@@ -328,6 +331,49 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
         {errors.dressCodeImageUrl ? (
           <p role="alert" className={errorClass}>{errors.dressCodeImageUrl.message}</p>
         ) : null}
+      </section>
+
+      <section className={`${cardClass} space-y-3`}>
+        <div>
+          <h2 className="text-base font-bold text-slate-900">
+            Música de fondo{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </h2>
+          <p className={helpClass}>
+            Una melodía suave que suena al abrir la invitación, con un botón
+            para silenciarla. Las melodías se generan en el navegador: no se
+            descarga ningún archivo.
+          </p>
+        </div>
+
+        <div className="sm:max-w-sm">
+          <label htmlFor="musicTrack" className={labelClass}>
+            Melodía
+          </label>
+          <select
+            id="musicTrack"
+            className={inputClass}
+            aria-invalid={Boolean(errors.musicTrack)}
+            {...register("musicTrack")}
+          >
+            <option value="">Sin música</option>
+            {MUSIC_TRACKS.map((track) => (
+              <option key={track.id} value={track.id}>
+                {track.name}
+              </option>
+            ))}
+          </select>
+          <p className={helpClass}>
+            {selectedTrack
+              ? selectedTrack.description
+              : "Elige una melodía o déjalo en «Sin música»."}
+          </p>
+          {errors.musicTrack ? (
+            <p role="alert" className={errorClass}>
+              {errors.musicTrack.message}
+            </p>
+          ) : null}
+        </div>
       </section>
 
       <section className={`${cardClass} space-y-3`}>

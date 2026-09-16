@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EventForm } from "@/components/EventForm";
 import { getHostEvent } from "@/lib/events";
 import { toWallClockInputValue } from "@/lib/format";
+import { isMusicTrackId } from "@/lib/music";
 import { requireHost } from "@/lib/session";
 import { ghostButtonClass } from "@/lib/ui";
 import type { EventFormValues } from "@/lib/validations/event";
@@ -36,6 +37,9 @@ export default async function EditEventPage({ params }: PageProps) {
     giftQrUrl: event.giftQrUrl ?? "",
     giftMessage: event.giftMessage ?? "",
     dressCodeImageUrl: event.dressCodeImageUrl ?? "",
+    // La columna es texto libre, así que se comprueba contra el catálogo: una
+    // melodía retirada cae a «Sin música» en vez de romper el formulario.
+    musicTrack: isMusicTrackId(event.musicTrack) ? event.musicTrack : "",
     backgroundTemplateId: event.backgroundTemplateId ?? "",
     maxGuestsPerRsvp: event.maxGuestsPerRsvp,
     isActive: event.isActive,

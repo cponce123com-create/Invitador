@@ -6,6 +6,7 @@ import {
   MAX_GUESTS_PER_RSVP_LIMIT,
 } from "@/lib/constants";
 import { parseWallClockInput } from "@/lib/format";
+import { MUSIC_TRACK_IDS } from "@/lib/music";
 import { isHttpUrl } from "@/lib/urls";
 
 /**
@@ -90,6 +91,10 @@ export const eventFormSchema = z.object({
   dressCodeImageUrl: optionalUrl(
     "La URL de la foto del código de vestimenta no es válida",
   ),
+  // Melodía de fondo (`lib/music.ts`). Cadena vacía = sin música. La invitación
+  // sintetiza la melodía en el navegador, así que no hay ningún archivo que
+  // subir ni URL que validar.
+  musicTrack: z.union([z.enum(MUSIC_TRACK_IDS), z.literal("")]).optional(),
   // Fondo demo elegido (`BackgroundTemplate.id`). Cadena vacía = sin fondo.
   backgroundTemplateId: z
     .union([

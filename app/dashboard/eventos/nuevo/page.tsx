@@ -24,6 +24,7 @@ const initialValues: EventFormValues = {
   giftQrUrl: "",
   giftMessage: "",
   dressCodeImageUrl: "",
+  musicTrack: "",
   backgroundTemplateId: "",
   maxGuestsPerRsvp: DEFAULT_MAX_GUESTS_PER_RSVP,
   isActive: true,

@@ -102,6 +102,18 @@ describe("toEventScalarData", () => {
     );
   });
 
+  it("guarda null sin melodía de fondo y conserva la elegida", () => {
+    // Ausente y vacío son las dos formas de decir «Sin música».
+    expect(toEventScalarData(formValues).musicTrack).toBeNull();
+    expect(
+      toEventScalarData({ ...formValues, musicTrack: "" }).musicTrack,
+    ).toBeNull();
+
+    const data = toEventScalarData({ ...formValues, musicTrack: "CUMPLEANOS" });
+
+    expect(data.musicTrack).toBe("CUMPLEANOS");
+  });
+
   it("guarda null sin cierre de lista y lo convierte cuando se define", () => {
     expect(toEventScalarData(formValues).rsvpDeadline).toBeNull();
 
