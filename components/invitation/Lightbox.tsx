@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, type TouchEvent } from "react";
+import { createPortal } from "react-dom";
 import { optimizedImageUrl } from "@/lib/images";
 import { cn } from "@/lib/ui";
 import { useFullScreenLayer } from "./overlay-layer";
@@ -26,6 +27,12 @@ const SWIPE_THRESHOLD = 44;
 /**
  * Visor a pantalla completa del muro de fotos: navegación con swipe, flechas y
  * teclado (← → Esc), foco en el botón de cierre y bloqueo del scroll de fondo.
+ *
+ * Se monta en `document.body` mediante un portal: dentro del `Reveal` que
+ * envuelve la tarjeta de fotos, el `transform` que deja su animación (que usa
+ * `fill-mode: both`) convierte ese div en bloque contenedor y el `fixed` pasaría
+ * a medir la tarjeta en vez de la pantalla; además quedaría por debajo de las
+ * capas de partículas y confeti, que se pintan fuera del contenido (`z-10`).
  */
 export function Lightbox({
   photos,
@@ -91,7 +98,7 @@ export function Lightbox({
 
   if (!photo) return null;
 
-  return (
+  const overlay = (
     <div
       role="dialog"
       aria-modal="true"
@@ -161,4 +168,10 @@ export function Lightbox({
       </div>
     </div>
   );
+
+  // `document` no existe durante el renderizado en servidor, y el visor solo se
+  // abre tras un toque del visitante, así que nunca llega a hidratarse.
+  if (typeof document === "undefined") return null;
+
+  return createPortal(overlay, document.body);
 }
