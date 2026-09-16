@@ -105,8 +105,11 @@ export default async function PublicEventPage({ params }: PageProps) {
           />
         </Reveal>
 
-        <footer className="pt-2 text-center text-xs text-slate-400">
-          Invitación creada con Invitador
+        <footer className="space-y-1 pt-2 text-center text-xs text-slate-400">
+          <p>Invitación creada con Invitador</p>
+          <p className="font-medium text-slate-500">
+            Desarrollado por Pisanucas Tec
+          </p>
         </footer>
       </div>
     </InvitationShell>
