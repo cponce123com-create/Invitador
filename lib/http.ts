@@ -39,3 +39,28 @@ export function getClientIpFromHeaders(headers: HeaderSource): string {
 export function getClientIp(request: Request): string {
   return getClientIpFromHeaders(request.headers);
 }
+
+/**
+ * `true` si la petición viene de otro sitio (posible CSRF).
+ *
+ * Los navegadores mandan `Sec-Fetch-Site` en todas las peticiones y `Origin` en
+ * las que no son GET/HEAD del mismo origen. Si no llega ninguna de las dos se
+ * deja pasar: son clientes que no son un navegador (curl, pruebas) y no llevan
+ * las cookies de nadie.
+ */
+export function isCrossOriginRequest(request: Request): boolean {
+  const fetchSite = request.headers.get("sec-fetch-site");
+  if (fetchSite) return fetchSite !== "same-origin" && fetchSite !== "none";
+
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+
+  const host = request.headers.get("host");
+  if (!host) return true;
+
+  try {
+    return new URL(origin).host !== host;
+  } catch {
+    return true;
+  }
+}

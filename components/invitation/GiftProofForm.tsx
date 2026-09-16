@@ -167,7 +167,7 @@ export function GiftProofForm({ eventId }: Props) {
           {...register("senderName")}
         />
         {errors.senderName ? (
-          <p className={errorClass}>{errors.senderName.message}</p>
+          <p role="alert" className={errorClass}>{errors.senderName.message}</p>
         ) : null}
       </div>
 
@@ -222,7 +222,7 @@ export function GiftProofForm({ eventId }: Props) {
           placeholder="Ej: Un abrazo grande, ahí va nuestro aporte."
           {...register("note")}
         />
-        {errors.note ? <p className={errorClass}>{errors.note.message}</p> : null}
+        {errors.note ? <p role="alert" className={errorClass}>{errors.note.message}</p> : null}
       </div>
 
       {serverError ? (

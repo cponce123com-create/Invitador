@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api";
 import { deleteCloudinaryAssets } from "@/lib/events";
+import { isCrossOriginRequest } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getCurrentHost } from "@/lib/session";
 
@@ -15,7 +16,11 @@ type RouteContext = { params: { id: string } };
  * Solo puede hacerlo el anfitrión dueño del evento: la consulta filtra por la
  * relación con el evento, así que el id de otro anfitrión da 404.
  */
-export async function DELETE(_request: Request, { params }: RouteContext) {
+export async function DELETE(request: Request, { params }: RouteContext) {
+  if (isCrossOriginRequest(request)) {
+    return jsonError("Origen no permitido", 403);
+  }
+
   const host = await getCurrentHost();
   if (!host) return jsonError("No autorizado", 401);
 

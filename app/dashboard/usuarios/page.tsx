@@ -14,7 +14,15 @@ export default async function UsersPage() {
 
   const users = await prisma.host.findMany({
     orderBy: [{ isSuperAdmin: "desc" }, { createdAt: "asc" }],
-    include: { _count: { select: { events: true } } },
+    // Solo lo que pinta la lista: `passwordHash` no sale nunca de la base.
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      isSuperAdmin: true,
+      createdAt: true,
+      _count: { select: { events: true } },
+    },
   });
 
   return (

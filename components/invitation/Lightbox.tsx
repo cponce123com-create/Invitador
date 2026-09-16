@@ -43,6 +43,7 @@ export function Lightbox({
   onIndexChange,
 }: LightboxProps) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const photo = photos[index];
   const hasPrev = index > 0;
@@ -50,6 +51,14 @@ export function Lightbox({
 
   // Mientras el visor tapa la invitación, el fondo ambiental se detiene.
   useFullScreenLayer();
+
+  // Al cerrar, el foco vuelve a la miniatura que lo abrió: sin esto, quien navega
+  // con teclado aterriza al principio del documento después de cada foto.
+  useEffect(() => {
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => previouslyFocused?.focus();
+  }, []);
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -64,6 +73,29 @@ export function Lightbox({
         onIndexChange(index - 1);
       } else if (event.key === "ArrowRight" && index < photos.length - 1) {
         onIndexChange(index + 1);
+      } else if (event.key === "Tab") {
+        // Trampa mínima: el tabulador recorre los botones del visor en lugar de
+        // escaparse a la invitación que queda debajo.
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        const buttons = Array.from(
+          dialog.querySelectorAll<HTMLButtonElement>("button:not([disabled])"),
+        );
+        const first = buttons.at(0);
+        const last = buttons.at(-1);
+        if (!first || !last) return;
+        if (event.shiftKey) {
+          if (
+            document.activeElement === first ||
+            !dialog.contains(document.activeElement)
+          ) {
+            event.preventDefault();
+            last.focus();
+          }
+        } else if (document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
 
@@ -111,6 +143,7 @@ export function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={`Fotos de ${title}`}
+      ref={dialogRef}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       className="fixed inset-0 z-[80] flex touch-none flex-col overscroll-contain bg-slate-950/90 backdrop-blur-sm"

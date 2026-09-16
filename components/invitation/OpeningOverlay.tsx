@@ -29,14 +29,28 @@ export function OpeningOverlay({ theme, onOpen }: OpeningOverlayProps) {
   useFullScreenLayer();
 
   useEffect(() => {
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     buttonRef.current?.focus();
+
+    // Trampa mínima: la cortina tiene un solo control, así que el tabulador no
+    // debe llevarse el foco a la invitación que todavía está tapada.
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Tab") {
+        event.preventDefault();
+        buttonRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
 
     // Refuerzo para el escritorio; en iOS Safari el scroll de fondo se bloquea
     // de verdad con `touch-none` en la raíz, no con `overflow: hidden`.
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
+      window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
     };
   }, []);
 

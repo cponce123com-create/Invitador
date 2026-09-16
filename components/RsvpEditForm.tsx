@@ -124,7 +124,7 @@ export function RsvpEditForm({
             {...register("mainGuestName")}
           />
           {errors.mainGuestName ? (
-            <p className={errorClass}>{errors.mainGuestName.message}</p>
+            <p role="alert" className={errorClass}>{errors.mainGuestName.message}</p>
           ) : null}
         </div>
 
@@ -140,7 +140,7 @@ export function RsvpEditForm({
             {...register("mainGuestPhone")}
           />
           {errors.mainGuestPhone ? (
-            <p className={errorClass}>{errors.mainGuestPhone.message}</p>
+            <p role="alert" className={errorClass}>{errors.mainGuestPhone.message}</p>
           ) : null}
         </div>
       </div>
@@ -165,7 +165,7 @@ export function RsvpEditForm({
             />
           )}
         />
-        {errors.attendance ? <p className={errorClass}>{errors.attendance.message}</p> : null}
+        {errors.attendance ? <p role="alert" className={errorClass}>{errors.attendance.message}</p> : null}
       </div>
 
       {attendance === "SI" ? (
@@ -207,7 +207,7 @@ export function RsvpEditForm({
           )}
 
           {errors.additionalGuests?.message ? (
-            <p className={errorClass}>{errors.additionalGuests.message}</p>
+            <p role="alert" className={errorClass}>{errors.additionalGuests.message}</p>
           ) : null}
         </div>
       ) : null}
@@ -222,7 +222,7 @@ export function RsvpEditForm({
           className={inputClass}
           {...register("message")}
         />
-        {errors.message ? <p className={errorClass}>{errors.message.message}</p> : null}
+        {errors.message ? <p role="alert" className={errorClass}>{errors.message.message}</p> : null}
       </div>
 
       {serverError ? (

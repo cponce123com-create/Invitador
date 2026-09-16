@@ -23,7 +23,18 @@ export default async function DashboardPage() {
   const events = await prisma.event.findMany({
     where: { hostId: host.id },
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { rsvps: true, photos: true } } },
+    // Solo lo que pintan las tarjetas: la descripción o el QR no hacen falta.
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      type: true,
+      customLabel: true,
+      eventDate: true,
+      location: true,
+      isActive: true,
+      _count: { select: { rsvps: true, photos: true } },
+    },
   });
 
   return (

@@ -77,7 +77,7 @@ export function CreateUserForm() {
           aria-invalid={Boolean(errors.email)}
           {...register("email")}
         />
-        {errors.email ? <p className={errorClass}>{errors.email.message}</p> : null}
+        {errors.email ? <p role="alert" className={errorClass}>{errors.email.message}</p> : null}
       </div>
 
       <div>
@@ -93,7 +93,7 @@ export function CreateUserForm() {
           aria-invalid={Boolean(errors.name)}
           {...register("name")}
         />
-        {errors.name ? <p className={errorClass}>{errors.name.message}</p> : null}
+        {errors.name ? <p role="alert" className={errorClass}>{errors.name.message}</p> : null}
       </div>
 
       <div>
@@ -109,7 +109,7 @@ export function CreateUserForm() {
           {...register("password")}
         />
         {errors.password ? (
-          <p className={errorClass}>{errors.password.message}</p>
+          <p role="alert" className={errorClass}>{errors.password.message}</p>
         ) : (
           <p className={helpClass}>
             Mínimo {PASSWORD_MIN_LENGTH} caracteres. Compártela con el usuario.

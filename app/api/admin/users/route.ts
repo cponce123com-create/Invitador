@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
+import { isCrossOriginRequest } from "@/lib/http";
 import { hashPassword } from "@/lib/password";
 import { isUniqueConstraintError, prisma } from "@/lib/prisma";
 import { getCurrentHost } from "@/lib/session";
@@ -32,6 +33,10 @@ export async function GET() {
 
 /** Crea una cuenta con la contraseña indicada. Solo para super admins. */
 export async function POST(request: Request) {
+  if (isCrossOriginRequest(request)) {
+    return jsonError("Origen no permitido", 403);
+  }
+
   const host = await getCurrentHost();
   if (!host) return jsonError("No autorizado", 401);
   if (!host.isSuperAdmin) return jsonError("No tienes permisos para crear usuarios", 403);

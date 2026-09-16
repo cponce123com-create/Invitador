@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
 import { emptyToNull } from "@/lib/events";
+import { isCrossOriginRequest } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getCurrentHost } from "@/lib/session";
 import { updateRsvpSchema } from "@/lib/validations/rsvp";
@@ -28,6 +29,10 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } },
 ) {
+  if (isCrossOriginRequest(request)) {
+    return jsonError("Origen no permitido", 403);
+  }
+
   const host = await getCurrentHost();
   if (!host) return jsonError("No autorizado", 401);
 
@@ -75,9 +80,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: { id: string } },
 ) {
+  if (isCrossOriginRequest(request)) {
+    return jsonError("Origen no permitido", 403);
+  }
+
   const host = await getCurrentHost();
   if (!host) return jsonError("No autorizado", 401);
 

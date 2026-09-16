@@ -67,7 +67,7 @@ export function LoginForm() {
           aria-invalid={Boolean(errors.email)}
           {...register("email")}
         />
-        {errors.email ? <p className={errorClass}>{errors.email.message}</p> : null}
+        {errors.email ? <p role="alert" className={errorClass}>{errors.email.message}</p> : null}
       </div>
 
       <div>
@@ -82,7 +82,7 @@ export function LoginForm() {
           aria-invalid={Boolean(errors.password)}
           {...register("password")}
         />
-        {errors.password ? <p className={errorClass}>{errors.password.message}</p> : null}
+        {errors.password ? <p role="alert" className={errorClass}>{errors.password.message}</p> : null}
       </div>
 
       {serverError ? (

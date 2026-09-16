@@ -151,7 +151,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             {...register("title")}
           />
           {errors.title ? (
-            <p className={errorClass}>{errors.title.message}</p>
+            <p role="alert" className={errorClass}>{errors.title.message}</p>
           ) : null}
         </div>
 
@@ -168,7 +168,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
               ))}
             </select>
             {errors.type ? (
-              <p className={errorClass}>{errors.type.message}</p>
+              <p role="alert" className={errorClass}>{errors.type.message}</p>
             ) : null}
           </div>
 
@@ -187,7 +187,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
               Si la dejas vacía se usa el nombre del tipo de evento.
             </p>
             {errors.customLabel ? (
-              <p className={errorClass}>{errors.customLabel.message}</p>
+              <p role="alert" className={errorClass}>{errors.customLabel.message}</p>
             ) : null}
           </div>
         </div>
@@ -204,7 +204,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
               {...register("ageOrDetail")}
             />
             {errors.ageOrDetail ? (
-              <p className={errorClass}>{errors.ageOrDetail.message}</p>
+              <p role="alert" className={errorClass}>{errors.ageOrDetail.message}</p>
             ) : null}
           </div>
 
@@ -221,7 +221,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
               {...register("eventDate")}
             />
             {errors.eventDate ? (
-              <p className={errorClass}>{errors.eventDate.message}</p>
+              <p role="alert" className={errorClass}>{errors.eventDate.message}</p>
             ) : null}
           </div>
         </div>
@@ -237,7 +237,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             {...register("location")}
           />
           {errors.location ? (
-            <p className={errorClass}>{errors.location.message}</p>
+            <p role="alert" className={errorClass}>{errors.location.message}</p>
           ) : null}
         </div>
 
@@ -259,7 +259,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             invitación no muestra el botón de mapa.
           </p>
           {errors.mapUrl ? (
-            <p className={errorClass}>{errors.mapUrl.message}</p>
+            <p role="alert" className={errorClass}>{errors.mapUrl.message}</p>
           ) : null}
         </div>
 
@@ -277,7 +277,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
           )}
         />
         {errors.locationImageUrl ? (
-          <p className={errorClass}>{errors.locationImageUrl.message}</p>
+          <p role="alert" className={errorClass}>{errors.locationImageUrl.message}</p>
         ) : null}
 
         <div>
@@ -293,7 +293,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             {...register("description")}
           />
           {errors.description ? (
-            <p className={errorClass}>{errors.description.message}</p>
+            <p role="alert" className={errorClass}>{errors.description.message}</p>
           ) : null}
         </div>
       </section>
@@ -326,7 +326,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
         />
 
         {errors.photos ? (
-          <p className={errorClass}>{errors.photos.message}</p>
+          <p role="alert" className={errorClass}>{errors.photos.message}</p>
         ) : null}
       </section>
 
@@ -400,7 +400,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
           )}
         />
         {errors.giftQrUrl ? (
-          <p className={errorClass}>{errors.giftQrUrl.message}</p>
+          <p role="alert" className={errorClass}>{errors.giftQrUrl.message}</p>
         ) : null}
 
         <div>
@@ -420,7 +420,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             Aparece junto al QR. Máximo {MAX_GIFT_MESSAGE} caracteres.
           </p>
           {errors.giftMessage ? (
-            <p className={errorClass}>{errors.giftMessage.message}</p>
+            <p role="alert" className={errorClass}>{errors.giftMessage.message}</p>
           ) : null}
         </div>
       </section>
@@ -445,7 +445,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             {MAX_GUESTS_PER_RSVP_LIMIT}).
           </p>
           {errors.maxGuestsPerRsvp ? (
-            <p className={errorClass}>{errors.maxGuestsPerRsvp.message}</p>
+            <p role="alert" className={errorClass}>{errors.maxGuestsPerRsvp.message}</p>
           ) : null}
         </div>
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
-import { getClientIp } from "@/lib/http";
+import { getClientIp, isCrossOriginRequest } from "@/lib/http";
 import { hashPassword } from "@/lib/password";
 import {
   isSerializationError,
@@ -28,6 +28,10 @@ export async function GET() {
  * serializable: dos peticiones simultáneas no pueden crear dos superadmins.
  */
 export async function POST(request: Request) {
+  if (isCrossOriginRequest(request)) {
+    return jsonError("Origen no permitido", 403);
+  }
+
   // El endpoint es público: se corta la fuerza bruta por IP.
   const gate = await checkSetupRateLimit(`setup:${getClientIp(request)}`);
   if (!gate.success) {

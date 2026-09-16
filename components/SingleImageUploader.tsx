@@ -135,7 +135,7 @@ export function SingleImageUploader({
         onChange={(event) => void handleFile(event.target.files)}
       />
 
-      {uploadError ? <p className={errorClass}>{uploadError}</p> : null}
+      {uploadError ? <p role="alert" className={errorClass}>{uploadError}</p> : null}
     </div>
   );
 }

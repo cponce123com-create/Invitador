@@ -131,7 +131,7 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
           {...register("mainGuestName")}
         />
         {errors.mainGuestName ? (
-          <p className={errorClass}>{errors.mainGuestName.message}</p>
+          <p role="alert" className={errorClass}>{errors.mainGuestName.message}</p>
         ) : null}
       </div>
 
@@ -145,10 +145,11 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
           placeholder="Ej: +57 300 123 4567"
           inputMode="tel"
           autoComplete="tel"
+          aria-invalid={Boolean(errors.mainGuestPhone)}
           {...register("mainGuestPhone")}
         />
         {errors.mainGuestPhone ? (
-          <p className={errorClass}>{errors.mainGuestPhone.message}</p>
+          <p role="alert" className={errorClass}>{errors.mainGuestPhone.message}</p>
         ) : null}
       </div>
 
@@ -172,7 +173,7 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
             />
           )}
         />
-        {errors.attendance ? <p className={errorClass}>{errors.attendance.message}</p> : null}
+        {errors.attendance ? <p role="alert" className={errorClass}>{errors.attendance.message}</p> : null}
       </div>
 
       {attendance === "SI" ? (
@@ -216,7 +217,7 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
           )}
 
           {errors.additionalGuests?.message ? (
-            <p className={errorClass}>{errors.additionalGuests.message}</p>
+            <p role="alert" className={errorClass}>{errors.additionalGuests.message}</p>
           ) : null}
         </div>
       ) : null}
@@ -232,7 +233,7 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
           placeholder="Ej: ¡Qué emoción! Ahí estaremos."
           {...register("message")}
         />
-        {errors.message ? <p className={errorClass}>{errors.message.message}</p> : null}
+        {errors.message ? <p role="alert" className={errorClass}>{errors.message.message}</p> : null}
       </div>
 
       {serverError ? (

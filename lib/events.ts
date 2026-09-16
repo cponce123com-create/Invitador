@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { deleteCloudinaryImage } from "@/lib/cloudinary";
 import {
   ATTENDANCE_STATUSES,
@@ -160,16 +161,32 @@ export const eventDetailInclude = {
   giftProofs: { orderBy: { createdAt: "desc" } },
 } as const;
 
-/** Evento de un anfitrión concreto (o `null` si no es suyo). */
-export async function getHostEvent(hostId: string, eventId: string) {
-  return prisma.event.findFirst({
-    where: { id: eventId, hostId },
-    include: eventDetailInclude,
-  });
-}
+/**
+ * `cache` de React existe en el React con el que Next sirve las páginas, pero no
+ * en el paquete `react` que Vitest importa en node puro (ahí llega `undefined`).
+ * Se degrada a una función sin caché: memorizar por petición es una
+ * optimización, no un requisito de corrección.
+ */
+const requestCache: typeof cache =
+  typeof cache === "function" ? cache : (fn) => fn;
+
+/**
+ * Evento de un anfitrión concreto (o `null` si no es suyo).
+ *
+ * Va envuelto en `requestCache`: en una misma petición la página y sus
+ * metadatos piden el mismo evento, así que se consulta una sola vez.
+ */
+export const getHostEvent = requestCache(
+  async (hostId: string, eventId: string) => {
+    return prisma.event.findFirst({
+      where: { id: eventId, hostId },
+      include: eventDetailInclude,
+    });
+  },
+);
 
 /** Evento público por slug. Solo devuelve eventos activos. */
-export async function getPublicEventBySlug(slug: string) {
+export const getPublicEventBySlug = requestCache(async (slug: string) => {
   return prisma.event.findFirst({
     where: { slug, isActive: true },
     include: {
@@ -178,7 +195,7 @@ export async function getPublicEventBySlug(slug: string) {
       host: { select: { name: true } },
     },
   });
-}
+});
 
 export type EventStats = {
   yes: number;

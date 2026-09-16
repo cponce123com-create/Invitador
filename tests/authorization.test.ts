@@ -159,3 +159,36 @@ describe("PATCH /api/events/[id]", () => {
     expect(prismaMock.event.update).not.toHaveBeenCalled();
   });
 });
+
+describe("guarda CSRF", () => {
+  function crossOriginRequest(method: string, body?: unknown) {
+    return new Request("http://localhost/api/events", {
+      method,
+      headers: {
+        "content-type": "application/json",
+        "sec-fetch-site": "cross-site",
+        origin: "https://malo.example",
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  }
+
+  it("corta un POST de otro sitio antes de tocar la base", async () => {
+    const response = await POST(
+      crossOriginRequest("POST", { ...eventBase, photos: [] }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(prismaMock.event.create).not.toHaveBeenCalled();
+  });
+
+  it("corta un DELETE de otro sitio", async () => {
+    const response = await DELETE(crossOriginRequest("DELETE"), {
+      params: { id: "evt-1" },
+    });
+
+    expect(response.status).toBe(403);
+    expect(prismaMock.event.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.event.delete).not.toHaveBeenCalled();
+  });
+});

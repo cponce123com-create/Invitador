@@ -186,12 +186,12 @@ export function RsvpTable({ rsvps, eventId, maxGuestsPerRsvp }: Props) {
         <table className="w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-              <th className="px-3 py-2.5 font-semibold">Invitado</th>
-              <th className="px-3 py-2.5 font-semibold">Asistencia</th>
-              <th className="px-3 py-2.5 font-semibold">Acompañantes</th>
-              <th className="px-3 py-2.5 font-semibold">Mensaje</th>
-              <th className="px-3 py-2.5 font-semibold">Fecha</th>
-              <th className="px-3 py-2.5 font-semibold">Acciones</th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">Invitado</th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">Asistencia</th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">Acompañantes</th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">Mensaje</th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">Fecha</th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">Acciones</th>
             </tr>
           </thead>
           <tbody>

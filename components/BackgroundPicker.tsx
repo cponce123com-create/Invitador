@@ -101,7 +101,7 @@ export function BackgroundPicker({
         </p>
       </div>
 
-      {error ? <p className={errorClass}>{error}</p> : null}
+      {error ? <p role="alert" className={errorClass}>{error}</p> : null}
 
       <div
         role="group"

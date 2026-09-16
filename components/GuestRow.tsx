@@ -35,7 +35,7 @@ export function GuestRow({ index, register, errors, onRemove }: Props) {
             aria-invalid={Boolean(nameError)}
             {...register(`additionalGuests.${index}.name`)}
           />
-          {nameError ? <p className={errorClass}>{nameError}</p> : null}
+          {nameError ? <p role="alert" className={errorClass}>{nameError}</p> : null}
         </div>
 
         <div>
@@ -54,7 +54,7 @@ export function GuestRow({ index, register, errors, onRemove }: Props) {
               </option>
             ))}
           </select>
-          {relationError ? <p className={errorClass}>{relationError}</p> : null}
+          {relationError ? <p role="alert" className={errorClass}>{relationError}</p> : null}
         </div>
 
         <button

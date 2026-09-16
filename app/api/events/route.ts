@@ -5,6 +5,7 @@ import {
   photosBelongToHost,
   toEventScalarData,
 } from "@/lib/events";
+import { isCrossOriginRequest } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getCurrentHost } from "@/lib/session";
 import { eventFormSchema } from "@/lib/validations/event";
@@ -20,7 +21,17 @@ export async function GET() {
   const events = await prisma.event.findMany({
     where: { hostId: host.id },
     orderBy: { createdAt: "desc" },
-    include: {
+    // Solo los campos de la tarjeta + los contadores: la descripción, el fondo
+    // o el QR no se usan en un listado.
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      type: true,
+      customLabel: true,
+      eventDate: true,
+      location: true,
+      isActive: true,
       _count: { select: { rsvps: true, photos: true } },
     },
   });
@@ -30,6 +41,10 @@ export async function GET() {
 
 /** Crea un evento y genera su slug público. */
 export async function POST(request: Request) {
+  if (isCrossOriginRequest(request)) {
+    return jsonError("Origen no permitido", 403);
+  }
+
   const host = await getCurrentHost();
   if (!host) return jsonError("No autorizado", 401);
 

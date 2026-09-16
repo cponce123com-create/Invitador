@@ -103,7 +103,7 @@ export function PhotoUploader({ value, onChange, coverUrl, onPickCover, maxPhoto
         </p>
       </div>
 
-      {uploadError ? <p className={errorClass}>{uploadError}</p> : null}
+      {uploadError ? <p role="alert" className={errorClass}>{uploadError}</p> : null}
 
       {value.length > 0 ? (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">

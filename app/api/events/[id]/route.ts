@@ -8,6 +8,7 @@ import {
   toEventScalarData,
 } from "@/lib/events";
 import { isGiftAssetId, isHostAssetId } from "@/lib/images";
+import { isCrossOriginRequest } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getCurrentHost } from "@/lib/session";
 import { eventFormSchema } from "@/lib/validations/event";
@@ -28,6 +29,10 @@ export async function GET(_request: Request, { params }: RouteContext) {
 }
 
 export async function PATCH(request: Request, { params }: RouteContext) {
+  if (isCrossOriginRequest(request)) {
+    return jsonError("Origen no permitido", 403);
+  }
+
   const host = await getCurrentHost();
   if (!host) return jsonError("No autorizado", 401);
 
@@ -61,7 +66,11 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   return NextResponse.json({ event: await getHostEvent(host.id, existing.id) });
 }
 
-export async function DELETE(_request: Request, { params }: RouteContext) {
+export async function DELETE(request: Request, { params }: RouteContext) {
+  if (isCrossOriginRequest(request)) {
+    return jsonError("Origen no permitido", 403);
+  }
+
   const host = await getCurrentHost();
   if (!host) return jsonError("No autorizado", 401);
 
