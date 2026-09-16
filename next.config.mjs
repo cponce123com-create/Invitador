@@ -2,8 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    // Las imágenes se sirven optimizadas desde Cloudinary (f_auto,q_auto).
-    // Solo se permiten hosts conocidos para evitar usos abusivos del optimizador.
+    // Las fotos se piden tal cual a Cloudinary, que ya entrega WebP/AVIF con
+    // calidad automática desde su CDN. El optimizador de Next queda fuera a
+    // propósito: sin `sharp` instalado usa su codificador WASM, que es lento y
+    // gasta CPU del servidor, y su caché dura 60 s por defecto, así que casi
+    // cada visita rehacía un trabajo que Cloudinary ya hace mejor.
+    unoptimized: true,
+    // Solo hosts conocidos: sigue siendo la red de seguridad para el día que se
+    // reactive el optimizador.
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
     ],

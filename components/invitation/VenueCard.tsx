@@ -28,10 +28,13 @@ export function VenueCard({
       <h2 className="text-base font-bold text-slate-900">El lugar</h2>
 
       {locationImageUrl ? (
+        // 800 px cubre el recuadro (máx. 768 CSS px) y Cloudinary le suma la
+        // densidad de la pantalla con `dpr_auto`; pedirla a 1200 solo engordaba
+        // el archivo que descarga el invitado.
         <ZoomableImage
           src={locationImageUrl}
           alt={`Lugar de ${eventTitle}`}
-          optimizedWidth={1200}
+          optimizedWidth={800}
         />
       ) : null}
 
