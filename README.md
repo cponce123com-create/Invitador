@@ -221,6 +221,12 @@ tests/                             Tests de la lógica pura
   navegadores exigen un gesto del usuario para reproducir sonido, así que la
   música nunca suena sola. Con la pestaña oculta el contexto se suspende, de modo
   que el bucle no se corta cuando el navegador estrangula los temporizadores.
+- **Costados en pantallas grandes**: la columna de contenido mide 768 px, así que
+  en un monitor ancho sobran laterales. Para no dejarlos vacíos, la invitación
+  reutiliza la foto de portada del evento —desenfocada, atenuada y enmascarada
+  hacia el centro— como fondo fijo a partir de 1280 px. Es CSS puro sobre una
+  imagen que ya se descarga, no añade assets y sirve para cualquier tipo de
+  evento. Sin foto de portada, los costados conservan el degradado del tema.
 - **Subida firmada**: el `api_secret` de Cloudinary nunca llega al navegador;
   el backend genera una firma válida solo para una carpeta y un timestamp.
 - **Auth con contraseñas**: `Host.passwordHash` guarda el resultado de `scrypt`

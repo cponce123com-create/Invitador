@@ -74,7 +74,11 @@ export default async function PublicEventPage({ params }: PageProps) {
   const deadlineLabel = formatEventDate(event.rsvpDeadline);
 
   return (
-    <InvitationShell theme={theme} musicTrack={event.musicTrack}>
+    <InvitationShell
+      theme={theme}
+      musicTrack={event.musicTrack}
+      coverImageUrl={event.coverImageUrl}
+    >
       <EventHero
         title={event.title}
         type={event.type}
