@@ -41,3 +41,14 @@ export function createRsvpSchema(maxGuests: number) {
 }
 
 export type RsvpFormValues = z.infer<ReturnType<typeof createRsvpSchema>>;
+
+/**
+ * Esquema de edición desde el panel del anfitrión: los mismos campos que el
+ * formulario público (el tope de acompañantes sigue saliendo del evento) salvo
+ * el `eventId`, que va en la URL y no puede cambiarse desde el cuerpo.
+ */
+export function updateRsvpSchema(maxGuests: number) {
+  return createRsvpSchema(maxGuests).omit({ eventId: true });
+}
+
+export type RsvpEditValues = z.infer<ReturnType<typeof updateRsvpSchema>>;

@@ -5,7 +5,7 @@ import {
   giftProofFormSchema,
   giftProofRequestSchema,
 } from "@/lib/validations/gift-proof";
-import { createRsvpSchema } from "@/lib/validations/rsvp";
+import { createRsvpSchema, updateRsvpSchema } from "@/lib/validations/rsvp";
 
 const rsvpBase = {
   eventId: "evt_1",
@@ -39,6 +39,45 @@ describe("createRsvpSchema", () => {
       createRsvpSchema(3).safeParse({ ...rsvpBase, attendance: "QUIZAS" })
         .success,
     ).toBe(false);
+  });
+});
+
+const rsvpEditBase = {
+  mainGuestName: "Ana",
+  attendance: "SI" as const,
+  additionalGuests: [],
+};
+
+describe("updateRsvpSchema", () => {
+  it("no exige el evento: el id de la confirmación va en la URL", () => {
+    expect(updateRsvpSchema(2).safeParse(rsvpEditBase).success).toBe(true);
+  });
+
+  it("respeta el tope de acompañantes del evento", () => {
+    const result = updateRsvpSchema(1).safeParse({
+      ...rsvpEditBase,
+      additionalGuests: [
+        { name: "Luis", relation: "ESPOSO" },
+        { name: "Marta", relation: "AMIGA" },
+      ],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rechaza un nombre demasiado corto", () => {
+    expect(
+      updateRsvpSchema(3).safeParse({ ...rsvpEditBase, mainGuestName: "A" })
+        .success,
+    ).toBe(false);
+  });
+
+  it("acepta teléfono y mensaje vacíos (se guardan como nulos)", () => {
+    const result = updateRsvpSchema(3).safeParse({
+      ...rsvpEditBase,
+      mainGuestPhone: "",
+      message: "",
+    });
+    expect(result.success).toBe(true);
   });
 });
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import { GUEST_RELATIONS, GUEST_RELATION_LABELS } from "@/lib/constants";
 import { errorClass, inputClass } from "@/lib/ui";
@@ -14,6 +15,9 @@ type Props = {
 
 /** Fila de un acompañante: nombre + relación. */
 export function GuestRow({ index, register, errors, onRemove }: Props) {
+  // Puede haber varias copias del formulario en la misma página (invitación y
+  // panel, móvil y escritorio), así que los `id` deben ser únicos por instancia.
+  const uid = useId();
   const nameError = errors.additionalGuests?.[index]?.name?.message;
   const relationError = errors.additionalGuests?.[index]?.relation?.message;
 
@@ -21,11 +25,11 @@ export function GuestRow({ index, register, errors, onRemove }: Props) {
     <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5">
       <div className="grid gap-3 sm:grid-cols-[1fr_12rem_auto] sm:items-start">
         <div>
-          <label htmlFor={`guest-name-${index}`} className="sr-only">
+          <label htmlFor={`${uid}-guest-name-${index}`} className="sr-only">
             Nombre del acompañante {index + 1}
           </label>
           <input
-            id={`guest-name-${index}`}
+            id={`${uid}-guest-name-${index}`}
             className={inputClass}
             placeholder={`Nombre del acompañante ${index + 1}`}
             aria-invalid={Boolean(nameError)}
@@ -35,11 +39,11 @@ export function GuestRow({ index, register, errors, onRemove }: Props) {
         </div>
 
         <div>
-          <label htmlFor={`guest-relation-${index}`} className="sr-only">
+          <label htmlFor={`${uid}-guest-relation-${index}`} className="sr-only">
             Relación con el invitado principal
           </label>
           <select
-            id={`guest-relation-${index}`}
+            id={`${uid}-guest-relation-${index}`}
             className={inputClass}
             aria-invalid={Boolean(relationError)}
             {...register(`additionalGuests.${index}.relation`)}

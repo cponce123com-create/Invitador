@@ -5,9 +5,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Lightbox } from "@/components/invitation/Lightbox";
 import { formatShortDateTime } from "@/lib/format";
-import type { GiftProofSummary } from "@/lib/gift-proofs";
 import { optimizedImageUrl } from "@/lib/images";
 import { dangerButtonClass, ghostButtonClass } from "@/lib/ui";
+
+/** Comprobante tal como lo necesita la tarjeta del panel. */
+export type GiftProofItem = {
+  id: string;
+  senderName: string;
+  note: string | null;
+  url: string;
+  createdAt: Date;
+};
 
 /**
  * Lista de comprobantes recibidos en el panel del anfitrión: miniatura y enlace
@@ -17,13 +25,13 @@ import { dangerButtonClass, ghostButtonClass } from "@/lib/ui";
  * El borrado pasa por la API (solo el dueño del evento puede hacerlo) y después
  * se refresca la ruta para que el contador y la lista vuelvan a leer de la base.
  */
-export function GiftProofList({ proofs }: { proofs: GiftProofSummary[] }) {
+export function GiftProofList({ proofs }: { proofs: GiftProofItem[] }) {
   const router = useRouter();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleDelete(proof: GiftProofSummary) {
+  async function handleDelete(proof: GiftProofItem) {
     const confirmed = window.confirm(
       `¿Quitar el comprobante de ${proof.senderName}? Se borrará también la imagen. Esta acción no se puede deshacer.`,
     );
