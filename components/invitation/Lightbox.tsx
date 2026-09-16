@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import { optimizedImageUrl } from "@/lib/images";
+import { visiblePhotoRange } from "@/lib/lightbox";
 import { cn } from "@/lib/ui";
 import { useFullScreenLayer } from "./overlay-layer";
 
@@ -98,6 +99,13 @@ export function Lightbox({
 
   if (!photo) return null;
 
+  // La foto actual y sus vecinas se montan a la vez: al estar todas en el DOM
+  // con la misma maquetación, el navegador elige la misma variante del `srcset`
+  // y las descarga por adelantado, así que pasar de foto es una lectura de caché
+  // y no una petición que arranca después del clic.
+  const { start, end } = visiblePhotoRange(index, photos.length);
+  const slides = photos.slice(start, end + 1);
+
   const overlay = (
     <div
       role="dialog"
@@ -134,13 +142,25 @@ export function Lightbox({
         {/* En móvil la caja usa la altura disponible (las fotos verticales
             aprovechan la pantalla); en escritorio recupera el 4:3. */}
         <div className="relative h-[70dvh] w-full max-w-3xl overflow-hidden rounded-2xl bg-slate-900 shadow-2xl sm:aspect-[4/3] sm:h-auto">
-          <Image
-            src={optimizedImageUrl(photo.url, 1400)}
-            alt={`${title} — foto ${index + 1}`}
-            fill
-            sizes="(max-width: 768px) 100vw, 768px"
-            className="animate-pop-in object-contain"
-          />
+          {slides.map((slide, offset) => {
+            const isActive = start + offset === index;
+            return (
+              <Image
+                key={slide.id}
+                src={optimizedImageUrl(slide.url, 1400)}
+                alt={isActive ? `${title} — foto ${index + 1}` : ""}
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
+                loading="eager"
+                className={cn(
+                  "object-contain transition-opacity duration-300",
+                  isActive
+                    ? "animate-pop-in opacity-100"
+                    : "pointer-events-none opacity-0",
+                )}
+              />
+            );
+          })}
         </div>
 
         {photos.length > 1 ? (
