@@ -1,4 +1,5 @@
 import {
+  DEFAULT_CURRENCY,
   EVENT_TIME_ZONE,
   type AttendanceStatusValue,
   type GuestRelationValue,
@@ -171,4 +172,72 @@ export function formatGuestSummary(
   return additionalGuests.length > 0
     ? `+${additionalGuests.length}`
     : "Solo";
+}
+
+/**
+ * Precio del catálogo de regalos.
+ *
+ * Se guarda en céntimos (`Int`) para no arrastrar errores de coma flotante,
+ * pero el anfitrión escribe texto libre ("35", "35.5", "35.50"): la conversión
+ * vive aquí, junto al resto de parseos del proyecto, para que el formulario y
+ * los tests usen exactamente la misma regla.
+ */
+
+/** Acepta enteros o hasta dos decimales. Rechaza negativos, comas y basura. */
+const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/;
+
+/** Un formateador por moneda: construir `Intl` es caro para cada tarjeta. */
+const priceFormatters = new Map<string, Intl.NumberFormat>();
+
+function priceFormatter(currency: string): Intl.NumberFormat {
+  const cached = priceFormatters.get(currency);
+  if (cached) return cached;
+
+  let formatter: Intl.NumberFormat;
+  try {
+    formatter = new Intl.NumberFormat("es-PE", {
+      style: "currency",
+      currency,
+    });
+  } catch {
+    // Una moneda corrupta en la base no debe romper la invitación.
+    formatter = new Intl.NumberFormat("es-PE", {
+      style: "currency",
+      currency: DEFAULT_CURRENCY,
+    });
+  }
+
+  priceFormatters.set(currency, formatter);
+  return formatter;
+}
+
+/**
+ * Convierte el texto del formulario en céntimos.
+ * Vacío o con formato inválido devuelve `null` (el precio es opcional).
+ */
+export function parsePriceToCents(
+  value: string | null | undefined,
+): number | null {
+  const trimmed = value?.trim();
+  if (!trimmed || !PRICE_PATTERN.test(trimmed)) return null;
+  return Math.round(Number(trimmed) * 100);
+}
+
+/** Céntimos → precio listo para mostrar, ej: `S/ 35.50`. */
+export function formatPrice(
+  cents: number,
+  currency: string = DEFAULT_CURRENCY,
+): string {
+  return priceFormatter(currency).format(cents / 100);
+}
+
+/**
+ * Céntimos → texto del formulario (`3550` → `"35.50"`).
+ *
+ * Es el camino de vuelta de `parsePriceToCents`: al reabrir el evento, el
+ * anfitrión tiene que ver el mismo número que escribió. Sin precio → `""`.
+ */
+export function centsToPriceInput(cents: number | null | undefined): string {
+  if (cents === null || cents === undefined) return "";
+  return (cents / 100).toFixed(2);
 }

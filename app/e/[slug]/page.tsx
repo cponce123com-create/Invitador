@@ -4,6 +4,7 @@ import { EventHero } from "@/components/EventHero";
 import { DressCodeCard } from "@/components/invitation/DressCodeCard";
 import { FooterRibbon } from "@/components/invitation/FooterRibbon";
 import { GiftCard } from "@/components/invitation/GiftCard";
+import { GiftCatalog } from "@/components/invitation/GiftCatalog";
 import { GiftProofForm } from "@/components/invitation/GiftProofForm";
 import { InvitationShell } from "@/components/invitation/InvitationShell";
 import { PhotoWall } from "@/components/invitation/PhotoWall";
@@ -153,6 +154,29 @@ export default async function PublicEventPage({ params }: PageProps) {
             }
           />
         </Reveal>
+
+        {/* El catálogo va antes de la mesa de regalos: cada artículo tiene su
+            botón «Comprar el regalo», que abre el QR dentro de la invitación.
+            Al cliente solo van los campos que se pintan: el `cloudinaryId` es un
+            identificador interno y no debe viajar en el payload. */}
+        {event.giftItems.length > 0 ? (
+          <Reveal>
+            <GiftCatalog
+              items={event.giftItems.map((item) => ({
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                priceCents: item.priceCents,
+                currency: item.currency,
+                imageUrl: item.imageUrl,
+                proofCount: item._count.proofs,
+              }))}
+              eventId={event.id}
+              giftQrUrl={event.giftQrUrl}
+              giftMessage={event.giftMessage}
+            />
+          </Reveal>
+        ) : null}
 
         {event.giftQrUrl ? (
           <Reveal>

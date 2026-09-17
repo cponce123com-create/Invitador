@@ -29,6 +29,16 @@ export type GiftProofFormValues = z.infer<typeof giftProofFormSchema>;
  */
 export const giftProofRequestSchema = giftProofFormSchema.extend({
   eventId: z.string().trim().min(1, "Falta el evento"),
+  /**
+   * Artículo del catálogo al que corresponde el comprobante. Opcional: quien da
+   * efectivo —o quien sube la captura sin elegir regalo— lo omite. El endpoint
+   * comprueba que el artículo pertenezca al evento antes de guardarlo.
+   */
+  giftItemId: z
+    .string()
+    .trim()
+    .min(1, "El regalo elegido no es válido")
+    .optional(),
   url: z
     .string()
     .trim()

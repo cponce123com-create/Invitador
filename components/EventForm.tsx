@@ -10,6 +10,7 @@ import {
   useBackgroundTemplates,
 } from "@/components/BackgroundPicker";
 import { EventHero } from "@/components/EventHero";
+import { GiftItemEditor } from "@/components/GiftItemEditor";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import { SingleImageUploader } from "@/components/SingleImageUploader";
 import {
@@ -18,6 +19,7 @@ import {
   EVENT_TYPE_LABELS,
   getEventTypeLabel,
   MAX_EVENT_PHOTOS,
+  MAX_GIFT_ITEMS,
   MAX_GIFT_MESSAGE,
   MAX_GUESTS_PER_RSVP_LIMIT,
 } from "@/lib/constants";
@@ -109,6 +111,7 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
       musicTrack: values.musicTrack ?? "",
       backgroundTemplateId: values.backgroundTemplateId ?? "",
       photos: values.photos ?? [],
+      giftItems: values.giftItems ?? [],
     };
 
     try {
@@ -501,6 +504,40 @@ export function EventForm({ mode, defaultValues, eventId }: Props) {
             <p role="alert" className={errorClass}>{errors.giftMessage.message}</p>
           ) : null}
         </div>
+      </section>
+
+      <section className={`${cardClass} space-y-5`}>
+        <div>
+          <h2 className="text-base font-bold text-slate-900">
+            Catálogo de regalos{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </h2>
+          <p className={helpClass}>
+            Publica los regalos que te gustaría recibir con su foto y, si
+            quieres, su precio. En la invitación cada uno lleva un botón
+            «Comprar el regalo» que abre tu QR y el formulario del comprobante.
+            Si no publicas ninguno, la invitación no muestra el catálogo.
+          </p>
+        </div>
+
+        <Controller
+          control={control}
+          name="giftItems"
+          render={({ field }) => (
+            <GiftItemEditor
+              value={field.value ?? []}
+              onChange={field.onChange}
+              maxItems={MAX_GIFT_ITEMS}
+              showErrors={Boolean(errors.giftItems)}
+            />
+          )}
+        />
+
+        {errors.giftItems ? (
+          <p role="alert" className={errorClass}>
+            Revisa los regalos marcados: cada uno necesita un nombre y una foto.
+          </p>
+        ) : null}
       </section>
 
       <section className={`${cardClass} space-y-5`}>

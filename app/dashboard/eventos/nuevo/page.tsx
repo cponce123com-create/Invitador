@@ -29,6 +29,7 @@ const initialValues: EventFormValues = {
   maxGuestsPerRsvp: DEFAULT_MAX_GUESTS_PER_RSVP,
   isActive: true,
   photos: [],
+  giftItems: [],
 };
 
 export default async function NewEventPage() {

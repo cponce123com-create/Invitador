@@ -2,12 +2,14 @@ import { z } from "zod";
 import {
   EVENT_TYPES,
   MAX_EVENT_PHOTOS,
+  MAX_GIFT_ITEMS,
   MAX_GIFT_MESSAGE,
   MAX_GUESTS_PER_RSVP_LIMIT,
 } from "@/lib/constants";
 import { parseWallClockInput } from "@/lib/format";
 import { MUSIC_TRACK_IDS } from "@/lib/music";
 import { isHttpUrl } from "@/lib/urls";
+import { giftItemInputSchema } from "@/lib/validations/gift-item";
 
 /**
  * URL con esquema `http`/`https`.
@@ -111,6 +113,12 @@ export const eventFormSchema = z.object({
   photos: z
     .array(eventPhotoInputSchema)
     .max(MAX_EVENT_PHOTOS, `Puedes subir hasta ${MAX_EVENT_PHOTOS} fotos`)
+    .optional(),
+  // Catálogo de regalos: los artículos que el invitado puede elegir y pagar por
+  // fuera (Yape, Plin, transferencia…) contra el QR de la mesa de regalos.
+  giftItems: z
+    .array(giftItemInputSchema)
+    .max(MAX_GIFT_ITEMS, `Puedes publicar hasta ${MAX_GIFT_ITEMS} regalos`)
     .optional(),
 });
 

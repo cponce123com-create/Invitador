@@ -56,6 +56,17 @@ indicando, si quiere, hasta N acompañantes con su relación.
   los ya registrados —sin acentos ni mayúsculas y tolerante a erratas— y, si
   encuentra uno muy parecido, pide confirmación antes de guardar para evitar
   duplicar al invitado principal.
+- **Mesa de regalos** (opcional): el anfitrión sube el **QR de su mesa de
+  regalos** (Yape, Plin, transferencia…) con un mensaje corto; en la invitación
+  aparece junto al formulario donde el invitado adjunta el **comprobante**
+  (nombre + captura). El panel lista los comprobantes recibidos y los exporta a
+  CSV.
+- **Catálogo de regalos** (opcional): sobre la mesa de regalos, el anfitrión
+  publica hasta 30 artículos con foto, descripción y precio opcional. En la
+  invitación cada uno lleva un botón «Comprar el regalo» que abre el QR y el
+  formulario con el artículo ya asociado, y el catálogo marca «Ya lo apartó N
+  persona(s)» según los comprobantes recibidos. El panel indica a qué regalo
+  corresponde cada comprobante. Sin artículos publicados, no se renderiza.
 - **Dashboard del evento** en `/dashboard/eventos/[id]`: resumen de
   confirmaciones y total de personas, tabla de RSVPs, **export a CSV**, publicar
   o desactivar la invitación y eliminar el evento.
@@ -266,9 +277,9 @@ tests/                             Tests de la lógica pura
   respuestas, y los endpoints mutantes rechazan las peticiones que vienen de otro
   origen (`Sec-Fetch-Site`/`Origin`). Los endpoints públicos de la invitación
   quedan fuera a propósito.
-- **Assets de Cloudinary**: las fotos de un evento solo se aceptan —y solo se
-  destruyen— si viven en la carpeta `invitador/<hostId>/`, y los comprobantes en
-  `invitador/regalos/<eventId>/`.
+- **Assets de Cloudinary**: las fotos de un evento —incluidas las del catálogo de
+  regalos— solo se aceptan y solo se destruyen si viven en la carpeta
+  `invitador/<hostId>/`, y los comprobantes en `invitador/regalos/<eventId>/`.
 - **Tests**: `npm test` (Vitest, entorno node) cubre la lógica pura y de dominio
   —fechas, slugs, CSV, validaciones, rate limiting, imágenes, temas, partículas
   y presupuesto de render— más contratos de autorización multi-tenant, del alta

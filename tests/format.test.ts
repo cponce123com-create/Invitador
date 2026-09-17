@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  centsToPriceInput,
   formatGuestSummary,
+  formatPrice,
   formatShortDateTime,
   isPastEvent,
   isWallClockPast,
+  parsePriceToCents,
   parseWallClockInput,
   toWallClockInputValue,
   wallClockToInstant,
@@ -111,5 +114,55 @@ describe("formatGuestSummary", () => {
     expect(
       formatGuestSummary("SI", [{ relation: "AMIGO" }, { relation: "FAMILIAR" }]),
     ).toBe("+2");
+  });
+});
+
+describe("parsePriceToCents", () => {
+  it("convierte el texto del formulario en céntimos", () => {
+    expect(parsePriceToCents("35")).toBe(3500);
+    expect(parsePriceToCents("35.5")).toBe(3550);
+    expect(parsePriceToCents("35.50")).toBe(3550);
+    expect(parsePriceToCents(" 120 ")).toBe(12000);
+  });
+
+  it("no arrastra el error de coma flotante", () => {
+    expect(parsePriceToCents("19.99")).toBe(1999);
+    expect(parsePriceToCents("0.1")).toBe(10);
+  });
+
+  it("devuelve null sin precio o con un formato que no es un número", () => {
+    expect(parsePriceToCents("")).toBeNull();
+    expect(parsePriceToCents("   ")).toBeNull();
+    expect(parsePriceToCents(null)).toBeNull();
+    expect(parsePriceToCents(undefined)).toBeNull();
+    // Coma decimal, más de dos decimales, negativos y texto con símbolo.
+    expect(parsePriceToCents("35,50")).toBeNull();
+    expect(parsePriceToCents("35.555")).toBeNull();
+    expect(parsePriceToCents("-10")).toBeNull();
+    expect(parsePriceToCents("S/ 35")).toBeNull();
+  });
+});
+
+describe("centsToPriceInput", () => {
+  it("hace round-trip con parsePriceToCents", () => {
+    expect(centsToPriceInput(3550)).toBe("35.50");
+    expect(parsePriceToCents(centsToPriceInput(3550))).toBe(3550);
+  });
+
+  it("devuelve cadena vacía sin precio", () => {
+    expect(centsToPriceInput(null)).toBe("");
+    expect(centsToPriceInput(undefined)).toBe("");
+  });
+});
+
+describe("formatPrice", () => {
+  it("pinta el monto en soles", () => {
+    expect(formatPrice(3550)).toContain("35.50");
+  });
+
+  it("usa la moneda guardada y cae a la de la plataforma si es inválida", () => {
+    expect(formatPrice(3550, "USD")).toContain("35.50");
+    // Una moneda corrupta en la base no debe romper la invitación.
+    expect(formatPrice(3550, "no-existe")).toContain("35.50");
   });
 });

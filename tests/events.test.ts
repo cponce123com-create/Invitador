@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   computeEventStats,
   emptyToNull,
+  giftItemsBelongToHost,
   photosBelongToHost,
   toEventDate,
   toEventScalarData,
+  toGiftItemData,
 } from "@/lib/events";
 import type { EventFormValues } from "@/lib/validations/event";
 
@@ -179,5 +181,69 @@ describe("photosBelongToHost", () => {
   it("acepta una galería vacía o ausente", () => {
     expect(photosBelongToHost("host-1", [])).toBe(true);
     expect(photosBelongToHost("host-1", undefined)).toBe(true);
+  });
+});
+
+const regalo = (cloudinaryId: string) => ({
+  title: "Juego de sábanas",
+  description: "",
+  price: "120",
+  imageUrl: `https://res.cloudinary.com/demo/image/upload/v1/${cloudinaryId}.jpg`,
+  cloudinaryId,
+});
+
+describe("toGiftItemData", () => {
+  it("recorta el nombre y convierte el precio a céntimos", () => {
+    const data = toGiftItemData({
+      ...regalo("invitador/host-1/regalo"),
+      title: "  Vajilla  ",
+    });
+
+    expect(data.title).toBe("Vajilla");
+    expect(data.priceCents).toBe(12000);
+    expect(data.imageUrl).toBe(
+      "https://res.cloudinary.com/demo/image/upload/v1/invitador/host-1/regalo.jpg",
+    );
+  });
+
+  it("guarda null sin precio ni descripción", () => {
+    const data = toGiftItemData({
+      ...regalo("invitador/host-1/regalo"),
+      price: "",
+      description: "   ",
+    });
+
+    expect(data.priceCents).toBeNull();
+    expect(data.description).toBeNull();
+  });
+});
+
+describe("giftItemsBelongToHost", () => {
+  it("acepta las fotos del catálogo de la carpeta del anfitrión", () => {
+    expect(
+      giftItemsBelongToHost("host-1", [regalo("invitador/host-1/una")]),
+    ).toBe(true);
+  });
+
+  it("rechaza la lista si un solo regalo es de otro anfitrión", () => {
+    expect(
+      giftItemsBelongToHost("host-1", [
+        regalo("invitador/host-1/una"),
+        regalo("invitador/host-2/ajena"),
+      ]),
+    ).toBe(false);
+  });
+
+  it("rechaza la carpeta de comprobantes de regalo", () => {
+    // `invitador/regalos/{eventId}` es de los invitados: no sirve como foto de
+    // un artículo del catálogo, que la sube el anfitrión.
+    expect(
+      giftItemsBelongToHost("host-1", [regalo("invitador/regalos/ev1/recibo")]),
+    ).toBe(false);
+  });
+
+  it("acepta un catálogo vacío o ausente", () => {
+    expect(giftItemsBelongToHost("host-1", [])).toBe(true);
+    expect(giftItemsBelongToHost("host-1", undefined)).toBe(true);
   });
 });

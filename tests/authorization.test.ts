@@ -69,6 +69,12 @@ describe("DELETE /api/events/[id]", () => {
         { cloudinaryId: "invitador/host-a/uno.jpg" },
         { cloudinaryId: "invitador/host-b/ajena.jpg" },
       ],
+      // Las fotos del catálogo las sube el anfitrión, así que también se filtran
+      // por su carpeta (no por la de comprobantes, que es de los invitados).
+      giftItems: [
+        { cloudinaryId: "invitador/host-a/regalo.jpg" },
+        { cloudinaryId: "invitador/host-b/regalo-ajeno.jpg" },
+      ],
       giftProofs: [
         { cloudinaryId: "invitador/regalos/evt-1/recibo.jpg" },
         { cloudinaryId: "invitador/regalos/otro-evento/recibo.jpg" },
@@ -88,6 +94,7 @@ describe("DELETE /api/events/[id]", () => {
     );
     expect(destroyed).toEqual([
       "invitador/host-a/uno.jpg",
+      "invitador/host-a/regalo.jpg",
       "invitador/regalos/evt-1/recibo.jpg",
     ]);
   });

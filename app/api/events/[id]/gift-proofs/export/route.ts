@@ -17,7 +17,11 @@ export async function GET(_request: Request, { params }: RouteContext) {
     where: { id: params.id, hostId: host.id },
     select: {
       slug: true,
-      giftProofs: { orderBy: { createdAt: "desc" } },
+      giftProofs: {
+        orderBy: { createdAt: "desc" },
+        // El CSV indica a qué regalo del catálogo corresponde cada comprobante.
+        include: { giftItem: { select: { title: true } } },
+      },
     },
   });
   if (!event) return jsonError("Evento no encontrado", 404);

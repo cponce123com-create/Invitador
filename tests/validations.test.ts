@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { MAX_GIFT_MESSAGE } from "@/lib/constants";
+import {
+  MAX_GIFT_ITEMS,
+  MAX_GIFT_ITEM_DESCRIPTION,
+  MAX_GIFT_ITEM_TITLE,
+  MAX_GIFT_MESSAGE,
+} from "@/lib/constants";
 import { eventFormSchema } from "@/lib/validations/event";
 import {
   giftProofFormSchema,
@@ -405,5 +410,123 @@ describe("URLs con esquema peligroso", () => {
         }).success,
       ).toBe(false);
     }
+  });
+});
+
+describe("catálogo de regalos", () => {
+  const regalo = {
+    title: "Juego de sábanas",
+    price: "120",
+    imageUrl: "https://res.cloudinary.com/demo/image/upload/regalo.jpg",
+    cloudinaryId: "invitador/host-1/regalo",
+  };
+
+  it("acepta un catálogo con precio y descripción", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, description: "Talla queen" }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("acepta un regalo sin precio ni descripción", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, price: "", description: "" }],
+      }).success,
+    ).toBe(true);
+    expect(eventFormSchema.safeParse(eventBase).success).toBe(true);
+  });
+
+  it("exige nombre y foto en cada regalo", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, title: "A" }],
+      }).success,
+    ).toBe(false);
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, imageUrl: "" }],
+      }).success,
+    ).toBe(false);
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, cloudinaryId: "" }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rechaza un precio que no es un número", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, price: "gratis" }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("limita el nombre, la descripción y el número de regalos", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, title: "a".repeat(MAX_GIFT_ITEM_TITLE) }],
+      }).success,
+    ).toBe(true);
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, title: "a".repeat(MAX_GIFT_ITEM_TITLE + 1) }],
+      }).success,
+    ).toBe(false);
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [
+          { ...regalo, description: "a".repeat(MAX_GIFT_ITEM_DESCRIPTION + 1) },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: Array.from({ length: MAX_GIFT_ITEMS + 1 }, () => regalo),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rechaza una foto de regalo con esquema peligroso", () => {
+    expect(
+      eventFormSchema.safeParse({
+        ...eventBase,
+        giftItems: [{ ...regalo, imageUrl: "javascript:alert(1)" }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("acepta el comprobante con o sin regalo elegido", () => {
+    const comprobante = {
+      senderName: "Ana",
+      note: "",
+      eventId: "ev1",
+      url: "https://res.cloudinary.com/demo/image/upload/v1/recibo.jpg",
+      cloudinaryId: "invitador/regalos/ev1/abc123",
+    };
+
+    expect(giftProofRequestSchema.safeParse(comprobante).success).toBe(true);
+    expect(
+      giftProofRequestSchema.safeParse({
+        ...comprobante,
+        giftItemId: "item_1",
+      }).success,
+    ).toBe(true);
+    expect(
+      giftProofRequestSchema.safeParse({ ...comprobante, giftItemId: "" })
+        .success,
+    ).toBe(false);
   });
 });

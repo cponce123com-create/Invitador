@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EventForm } from "@/components/EventForm";
 import { getHostEvent } from "@/lib/events";
-import { toWallClockInputValue } from "@/lib/format";
+import { centsToPriceInput, toWallClockInputValue } from "@/lib/format";
 import { isMusicTrackId } from "@/lib/music";
 import { requireHost } from "@/lib/session";
 import { ghostButtonClass } from "@/lib/ui";
@@ -47,6 +47,16 @@ export default async function EditEventPage({ params }: PageProps) {
       id: photo.id,
       url: photo.url,
       cloudinaryId: photo.cloudinaryId,
+    })),
+    // El precio se guarda en céntimos: se devuelve al texto que escribió el
+    // anfitrión para que reabrir el formulario no cambie lo que ve.
+    giftItems: event.giftItems.map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description ?? "",
+      price: centsToPriceInput(item.priceCents),
+      imageUrl: item.imageUrl,
+      cloudinaryId: item.cloudinaryId,
     })),
   };
 

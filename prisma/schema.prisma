@@ -117,6 +117,7 @@ model Event {
   photos               EventPhoto[]
   rsvps                Rsvp[]
   giftProofs           GiftProof[]
+  giftItems            GiftItem[]
 
   @@index([hostId])
   @@index([backgroundTemplateId])
@@ -134,20 +135,51 @@ model EventPhoto {
   @@index([eventId])
 }
 
+/// Artículo del catálogo de regalos que arma el anfitrión. El invitado elige uno
+/// y paga por fuera (Yape, Plin, transferencia…) contra el QR de la mesa de
+/// regalos; el comprobante queda en `GiftProof` con `giftItemId`.
+model GiftItem {
+  id           String      @id @default(cuid())
+  eventId      String
+  event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?     @db.Text
+  /// Precio en céntimos para no arrastrar errores de coma flotante. `null` = el
+  /// anfitrión prefirió no publicar precio.
+  priceCents   Int?
+  /// ISO 4217. Escalable a otras monedas sin migrar el schema.
+  currency     String      @default("PEN")
+  /// La foto del artículo vive en la carpeta del anfitrión (no en la de
+  /// comprobantes), así que `isHostAssetId` la protege igual que las fotos.
+  imageUrl     String
+  cloudinaryId String
+  order        Int         @default(0)
+  createdAt    DateTime    @default(now())
+  proofs       GiftProof[]
+
+  @@index([eventId])
+}
+
 /// Comprobante de regalo que sube un invitado desde la invitación pública.
 /// No requiere sesión: el endpoint que lo crea limita por IP y el anfitrión
 /// puede borrar los que sobren desde su panel.
 model GiftProof {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   eventId      String
-  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event        Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  /// Artículo del catálogo al que corresponde el comprobante. `null` = el
+  /// invitado no eligió artículo (sigue valiendo para quien da efectivo).
+  /// `SetNull` para que borrar un artículo no borre los comprobantes recibidos.
+  giftItemId   String?
+  giftItem     GiftItem? @relation(fields: [giftItemId], references: [id], onDelete: SetNull)
   senderName   String
   note         String?
   cloudinaryId String
   url          String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   @@index([eventId])
+  @@index([giftItemId])
 }
 
 enum AttendanceStatus {

@@ -76,10 +76,13 @@ export type CsvGiftProof = {
   note: string | null;
   url: string;
   createdAt: Date;
+  /** Artículo del catálogo elegido, o `null` si el invitado no eligió ninguno. */
+  giftItem: { title: string } | null;
 };
 
 export const GIFT_PROOF_CSV_HEADERS = [
   "Nombre",
+  "Regalo",
   "Nota",
   "Comprobante",
   "Subido el",
@@ -91,6 +94,9 @@ export function giftProofsToCsv(proofs: readonly CsvGiftProof[]): string {
   for (const proof of proofs) {
     rows.push([
       proof.senderName,
+      // Vacío cuando el invitado no eligió un artículo del catálogo (efectivo,
+      // o un regalo fuera de la lista).
+      proof.giftItem?.title ?? "",
       proof.note ?? "",
       proof.url,
       formatShortDateTime(proof.createdAt),

@@ -15,6 +15,8 @@ export type GiftProofItem = {
   note: string | null;
   url: string;
   createdAt: Date;
+  /** Regalo del catálogo al que corresponde, o `null` si no eligió ninguno. */
+  giftItem: { title: string } | null;
 };
 
 /**
@@ -90,6 +92,11 @@ export function GiftProofList({ proofs }: { proofs: GiftProofItem[] }) {
               <p className="truncate text-sm font-semibold text-slate-900">
                 {proof.senderName}
               </p>
+              {proof.giftItem ? (
+                <p className="text-xs font-medium text-brand-700">
+                  🎁 {proof.giftItem.title}
+                </p>
+              ) : null}
               {proof.note ? (
                 <p className="text-xs text-slate-600">{proof.note}</p>
               ) : null}

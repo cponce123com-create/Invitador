@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
 import {
   createUniqueEventSlug,
+  giftItemsBelongToHost,
   photosBelongToHost,
   toEventScalarData,
+  toGiftItemData,
 } from "@/lib/events";
 import { isCrossOriginRequest } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
@@ -58,6 +60,12 @@ export async function POST(request: Request) {
     return jsonError("Alguna de las fotos no pertenece a tu cuenta", 400);
   }
 
+  // La foto de un regalo también la sube el anfitrión, así que se comprueba
+  // contra su carpeta igual que las de la galería.
+  if (!giftItemsBelongToHost(host.id, values.giftItems ?? [])) {
+    return jsonError("Alguna foto del catálogo no pertenece a tu cuenta", 400);
+  }
+
   const slug = await createUniqueEventSlug(values.title);
 
   const event = await prisma.event.create({
@@ -69,6 +77,12 @@ export async function POST(request: Request) {
         create: (values.photos ?? []).map((photo, index) => ({
           url: photo.url,
           cloudinaryId: photo.cloudinaryId,
+          order: index,
+        })),
+      },
+      giftItems: {
+        create: (values.giftItems ?? []).map((item, index) => ({
+          ...toGiftItemData(item),
           order: index,
         })),
       },

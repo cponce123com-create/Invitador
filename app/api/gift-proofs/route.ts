@@ -48,9 +48,25 @@ export async function POST(request: Request) {
     return jsonError("El comprobante no es válido", 400);
   }
 
+  // Si el invitado eligió un regalo del catálogo, se comprueba que sea de ESTE
+  // evento: el id lo envía el navegador, así que nadie puede colgar su
+  // comprobante del artículo de otro evento.
+  if (values.giftItemId) {
+    const giftItem = await prisma.giftItem.findFirst({
+      where: { id: values.giftItemId, eventId: event.id },
+      select: { id: true },
+    });
+    if (!giftItem) {
+      return jsonError("El regalo elegido no es válido", 400);
+    }
+  }
+
   const giftProof = await prisma.giftProof.create({
     data: {
       eventId: event.id,
+      // `null` cuando el invitado no eligió regalo (sigue valiendo para quien da
+      // efectivo): la columna es opcional a propósito.
+      giftItemId: values.giftItemId ?? null,
       senderName: values.senderName.trim(),
       note: emptyToNull(values.note),
       cloudinaryId: values.cloudinaryId,

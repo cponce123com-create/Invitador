@@ -113,6 +113,21 @@ export const MAX_EVENT_PHOTOS = 30;
 /** Longitud máxima del texto que acompaña al QR de la mesa de regalos. */
 export const MAX_GIFT_MESSAGE = 300;
 
+/** Cuántos artículos puede publicar el anfitrión en el catálogo de regalos. */
+export const MAX_GIFT_ITEMS = 30;
+
+/** Longitud máxima del nombre de un artículo del catálogo de regalos. */
+export const MAX_GIFT_ITEM_TITLE = 120;
+
+/** Longitud máxima de la descripción de un artículo del catálogo. */
+export const MAX_GIFT_ITEM_DESCRIPTION = 400;
+
+/**
+ * Moneda con la que se publican los precios del catálogo (ISO 4217).
+ * Coincide con la zona de referencia de la plataforma (hora de Perú).
+ */
+export const DEFAULT_CURRENCY = "PEN";
+
 /**
  * Zona horaria de referencia de la plataforma (hora de Perú, UTC-5).
  *

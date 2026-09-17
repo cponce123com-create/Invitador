@@ -82,13 +82,14 @@ describe("giftProofsToCsv", () => {
         note: "Para el regalo",
         url: "https://res.cloudinary.com/demo/image/upload/v1/recibo.jpg",
         createdAt: new Date("2026-07-01T12:00:00.000Z"),
+        giftItem: { title: "Juego de sábanas" },
       },
     ]);
 
     expect(csv.startsWith(CSV_BOM)).toBe(true);
     expect(csv).toContain(GIFT_PROOF_CSV_HEADERS.join(","));
     expect(csv).toContain(
-      "Ana,Para el regalo,https://res.cloudinary.com/demo/image/upload/v1/recibo.jpg",
+      "Ana,Juego de sábanas,Para el regalo,https://res.cloudinary.com/demo/image/upload/v1/recibo.jpg",
     );
   });
 
@@ -99,17 +100,38 @@ describe("giftProofsToCsv", () => {
         note: null,
         url: "https://res.cloudinary.com/demo/image/upload/v1/otro.jpg",
         createdAt: new Date("2026-07-02T12:00:00.000Z"),
+        // Sin artículo del catálogo: el invitado dio efectivo.
+        giftItem: null,
       },
       {
         senderName: "Marta",
         note: "Ramo, tarjeta y vino",
         url: "https://res.cloudinary.com/demo/image/upload/v1/tercero.jpg",
         createdAt: new Date("2026-07-03T12:00:00.000Z"),
+        giftItem: { title: "Vajilla" },
       },
     ]);
 
-    expect(csv).toContain("Luis,,https://res.cloudinary.com/demo/image/upload/v1/otro.jpg");
+    // Sin regalo y sin nota quedan dos celdas vacías antes de la URL.
+    expect(csv).toContain(
+      "Luis,,,https://res.cloudinary.com/demo/image/upload/v1/otro.jpg",
+    );
+    expect(csv).toContain("Marta,Vajilla,");
     expect(csv).toContain('"Ramo, tarjeta y vino"');
+  });
+
+  it("neutraliza el nombre del regalo si empieza como una fórmula", () => {
+    const csv = giftProofsToCsv([
+      {
+        senderName: "Ana",
+        note: null,
+        url: "https://res.cloudinary.com/demo/image/upload/v1/recibo.jpg",
+        createdAt: new Date("2026-07-01T12:00:00.000Z"),
+        giftItem: { title: "=1+1" },
+      },
+    ]);
+
+    expect(csv).toContain("Ana,'=1+1,");
   });
 });
 

@@ -4,7 +4,7 @@ import {
   ATTENDANCE_STATUSES,
   type AttendanceStatusValue,
 } from "@/lib/constants";
-import { parseWallClockInput } from "@/lib/format";
+import { parsePriceToCents, parseWallClockInput } from "@/lib/format";
 import { isGiftAssetId, isHostAssetId } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { buildEventSlug } from "@/lib/slug";
@@ -144,6 +144,92 @@ export async function syncEventPhotos(
   }
 }
 
+/** Un artículo del catálogo tal como lo envía el formulario. */
+type GiftItemInput = NonNullable<EventFormValues["giftItems"]>[number];
+
+/** Campos de `GiftItem` derivados del formulario validado. */
+export function toGiftItemData(item: GiftItemInput) {
+  return {
+    title: item.title.trim(),
+    description: emptyToNull(item.description),
+    priceCents: parsePriceToCents(item.price),
+    imageUrl: item.imageUrl,
+    cloudinaryId: item.cloudinaryId,
+  };
+}
+
+/**
+ * `true` si TODAS las fotos del catálogo apuntan a un asset de la carpeta de
+ * Cloudinary de este anfitrión.
+ *
+ * La foto de un artículo la sube el anfitrión (no es un comprobante de
+ * invitado), así que se valida con `isHostAssetId`: si no, un anfitrión podría
+ * guardar el `public_id` de otro y borrárselo después.
+ */
+export function giftItemsBelongToHost(
+  hostId: string,
+  items: EventFormValues["giftItems"],
+): boolean {
+  return (items ?? []).every((item) =>
+    isHostAssetId(hostId, item.cloudinaryId),
+  );
+}
+
+/**
+ * Reconcilia el catálogo de regalos enviado por el formulario con el guardado.
+ *
+ * - Los artículos que ya no vienen en el payload se borran de la base y su foto
+ *   de Cloudinary.
+ * - Los que se mantienen se reordenan según el orden del formulario.
+ * - Los nuevos se crean.
+ *
+ * Solo se aceptan ids de artículos de este evento: así un anfitrión no puede
+ * "robar" el artículo de otro evento enviando su id. Los comprobantes ya
+ * recibidos no se pierden: la relación es `onDelete: SetNull`, así que quedan
+ * sin artículo asignado.
+ */
+export async function syncGiftItems(
+  eventId: string,
+  items: EventFormValues["giftItems"],
+  hostId: string,
+): Promise<void> {
+  const incoming = items ?? [];
+  const existing = await prisma.giftItem.findMany({
+    where: { eventId },
+    select: { id: true, cloudinaryId: true },
+  });
+  const existingIds = new Set(existing.map((item) => item.id));
+  const incomingIds = new Set(
+    incoming.map((item) => item.id).filter((id): id is string => Boolean(id)),
+  );
+
+  const removed = existing.filter((item) => !incomingIds.has(item.id));
+
+  await prisma.$transaction([
+    ...removed.map((item) =>
+      prisma.giftItem.delete({ where: { id: item.id } }),
+    ),
+    ...incoming.map((item, index) => {
+      const data = { ...toGiftItemData(item), order: index };
+      if (item.id && existingIds.has(item.id)) {
+        return prisma.giftItem.update({ where: { id: item.id }, data });
+      }
+      return prisma.giftItem.create({ data: { ...data, eventId } });
+    }),
+  ]);
+
+  // Igual que con las fotos: el borrado en Cloudinary va fuera de la transacción
+  // (servicio externo) y solo toca assets de la carpeta de este anfitrión.
+  const removable = removed.filter((item) =>
+    isHostAssetId(hostId, item.cloudinaryId),
+  );
+  if (removable.length > 0) {
+    await Promise.all(
+      removable.map((item) => deleteCloudinaryImage(item.cloudinaryId)),
+    );
+  }
+}
+
 /**
  * Borra de Cloudinary una lista de assets del evento (fotos de la galería,
  * comprobantes de regalo…). Nunca lanza: el asset externo no debe bloquear ni
@@ -161,7 +247,13 @@ export const eventDetailInclude = {
     orderBy: { createdAt: "desc" },
     include: { additionalGuests: { orderBy: { createdAt: "asc" } } },
   },
-  giftProofs: { orderBy: { createdAt: "desc" } },
+  // El panel muestra a qué regalo corresponde cada comprobante, así que el
+  // listado del anfitrión trae el título del artículo.
+  giftProofs: {
+    orderBy: { createdAt: "desc" },
+    include: { giftItem: { select: { id: true, title: true } } },
+  },
+  giftItems: { orderBy: { order: "asc" } },
 } as const;
 
 /**
@@ -196,6 +288,12 @@ export const getPublicEventBySlug = requestCache(async (slug: string) => {
       backgroundTemplate: true,
       photos: { orderBy: { order: "asc" } },
       host: { select: { name: true } },
+      // El catálogo necesita saber cuántos comprobantes tiene cada artículo para
+      // mostrar «Ya lo apartó N persona(s)» sin traerse los comprobantes.
+      giftItems: {
+        orderBy: { order: "asc" },
+        include: { _count: { select: { proofs: true } } },
+      },
     },
   });
 });

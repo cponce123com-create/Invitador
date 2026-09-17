@@ -3,8 +3,10 @@ import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
 import {
   deleteCloudinaryAssets,
   getHostEvent,
+  giftItemsBelongToHost,
   photosBelongToHost,
   syncEventPhotos,
+  syncGiftItems,
   toEventScalarData,
 } from "@/lib/events";
 import { isGiftAssetId, isHostAssetId } from "@/lib/images";
@@ -52,15 +54,28 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     return jsonError("Alguna de las fotos no pertenece a tu cuenta", 400);
   }
 
+  // Las fotos del catálogo son fotos del anfitrión (no comprobantes), así que
+  // se validan contra su misma carpeta.
+  if (
+    values.giftItems !== undefined &&
+    !giftItemsBelongToHost(host.id, values.giftItems)
+  ) {
+    return jsonError("Alguna foto del catálogo no pertenece a tu cuenta", 400);
+  }
+
   await prisma.event.update({
     where: { id: existing.id },
     data: toEventScalarData(values),
   });
 
-  // Solo se reconcilian las fotos si el cliente las envió: así un PATCH parcial
-  // nunca borra la galería por omisión.
+  // Solo se reconcilian las fotos y el catálogo si el cliente los envió: así un
+  // PATCH parcial nunca borra la galería ni los regalos por omisión.
   if (values.photos !== undefined) {
     await syncEventPhotos(existing.id, values.photos, host.id);
+  }
+
+  if (values.giftItems !== undefined) {
+    await syncGiftItems(existing.id, values.giftItems, host.id);
   }
 
   return NextResponse.json({ event: await getHostEvent(host.id, existing.id) });
@@ -83,12 +98,16 @@ export async function DELETE(request: Request, { params }: RouteContext) {
     ...existing.photos
       .map((photo) => photo.cloudinaryId)
       .filter((cloudinaryId) => isHostAssetId(host.id, cloudinaryId)),
+    ...existing.giftItems
+      .map((item) => item.cloudinaryId)
+      .filter((cloudinaryId) => isHostAssetId(host.id, cloudinaryId)),
     ...existing.giftProofs
       .map((proof) => proof.cloudinaryId)
       .filter((cloudinaryId) => isGiftAssetId(existing.id, cloudinaryId)),
   ];
 
-  // Primero la base de datos (el borrado en cascada elimina fotos, RSVPs y comprobantes).
+  // Primero la base de datos (el borrado en cascada elimina fotos, regalos,
+  // RSVPs y comprobantes).
   await prisma.event.delete({ where: { id: existing.id } });
   // Después los assets externos, que no deben bloquear ni revertir el borrado.
   await deleteCloudinaryAssets(cloudinaryIds);

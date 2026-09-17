@@ -33,6 +33,12 @@ import {
 
 type Props = {
   eventId: string;
+  /**
+   * Artículo del catálogo que el invitado eligió, cuando el formulario llega
+   * desde la ventana de compra. Sin él, el comprobante se guarda sin regalo
+   * asignado: el caso de quien da efectivo o sube la captura por su cuenta.
+   */
+  giftItemId?: string;
 };
 
 const emptyValues = (): GiftProofFormValues => ({ senderName: "", note: "" });
@@ -45,7 +51,7 @@ const emptyValues = (): GiftProofFormValues => ({ senderName: "", note: "" });
  * se sube al elegirla, así que el envío es una sola petición corta y el invitado
  * ve de inmediato qué adjuntó.
  */
-export function GiftProofForm({ eventId }: Props) {
+export function GiftProofForm({ eventId, giftItemId }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploaded, setUploaded] = useState<UploadedImage | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -101,6 +107,9 @@ export function GiftProofForm({ eventId }: Props) {
         body: JSON.stringify({
           ...values,
           eventId,
+          // Solo viaja cuando el formulario viene de la ventana de compra: así el
+          // comprobante queda asociado al regalo que el invitado eligió.
+          ...(giftItemId ? { giftItemId } : {}),
           url: uploaded.url,
           cloudinaryId: uploaded.cloudinaryId,
         }),
