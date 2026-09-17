@@ -286,6 +286,23 @@ tests/                             Tests de la lógica pura
   simulados. No hay tests de componentes ni contra una base real: el flujo
   completo (login, subida de fotos, invitados) se comprueba en producción.
 
+## Notas de mantenimiento
+
+- **Actualización mayor de Next.js pendiente (`postcss`)**: `next@14.2.35`
+  fija internamente `postcss@8.4.31`, afectado por cuatro avisos —XSS en el
+  `stringify` de CSS (`GHSA-qx2v-qp2m-jg93`) y varias rutas de lectura
+  arbitraria de archivos vía `sourceMappingURL` (`GHSA-6g55-p6wh-862q`,
+  `GHSA-fxqj-rqcc-2cmp`, `GHSA-r28c-9q8g-f849`), dos de severidad alta y dos
+  moderada— que `npm audit` reporta a través de `next`. **Ninguna versión de la
+  rama 14.x ni de la 15.x lo corrige**: Next 15.5.25 sigue dependiendo de
+  `postcss@8.4.31`, y el `postcss` corregido (≥ 8.5.23) solo llega con
+  `next@16` (`next@16.3.5` usa `postcss@8.5.23`). Como el salto a Next 16 es
+  *breaking*, queda **pendiente para decidirlo en un cambio aparte**; el único
+  arreglo no-mayor hoy sería forzar `postcss` con un `overrides` de npm, que
+  conviene evaluar en ese mismo cambio. El proyecto no procesa CSS de terceros:
+  `postcss` solo entra en la cadena de build (Tailwind), no con datos del
+  usuario.
+
 ## Fondos demo: cómo agregar uno nuevo
 
 No hay que tocar la UI ni subir imágenes. Lo más simple es agregar un preset a
