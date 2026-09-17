@@ -57,16 +57,15 @@ indicando, si quiere, hasta N acompañantes con su relación.
   encuentra uno muy parecido, pide confirmación antes de guardar para evitar
   duplicar al invitado principal.
 - **Mesa de regalos** (opcional): el anfitrión sube el **QR de su mesa de
-  regalos** (Yape, Plin, transferencia…) con un mensaje corto; en la invitación
-  aparece junto al formulario donde el invitado adjunta el **comprobante**
-  (nombre + captura). El panel lista los comprobantes recibidos y los exporta a
-  CSV.
-- **Catálogo de regalos** (opcional): sobre la mesa de regalos, el anfitrión
-  publica hasta 30 artículos con foto, descripción y precio opcional. En la
-  invitación cada uno lleva un botón «Comprar el regalo» que abre el QR y el
-  formulario con el artículo ya asociado, y el catálogo marca «Ya lo apartó N
-  persona(s)» según los comprobantes recibidos. El panel indica a qué regalo
-  corresponde cada comprobante. Sin artículos publicados, no se renderiza.
+  regalos** (Yape, Plin, transferencia…) con un mensaje corto y, si quiere,
+  publica hasta 30 artículos del catálogo con foto, descripción y precio
+  opcional. En la invitación todo vive en una sola sección: el QR, el catálogo
+  (cada artículo con «Comprar el regalo» —que abre el comprobante ya asociado— y
+  la insignia «Ya lo apartó N persona(s)») y un botón «Aportar un monto» para
+  quien prefiere dar sin elegir regalo. Todas las vías abren la misma ventana,
+  donde el invitado adjunta su **comprobante** (nombre + captura). El panel lista
+  los comprobantes —indicando a qué regalo corresponden— y los exporta a CSV.
+  Sin QR ni artículos, la sección no se renderiza.
 - **Dashboard del evento** en `/dashboard/eventos/[id]`: resumen de
   confirmaciones y total de personas, tabla de RSVPs, **export a CSV**, publicar
   o desactivar la invitación y eliminar el evento.

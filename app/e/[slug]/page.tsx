@@ -3,9 +3,7 @@ import { notFound } from "next/navigation";
 import { EventHero } from "@/components/EventHero";
 import { DressCodeCard } from "@/components/invitation/DressCodeCard";
 import { FooterRibbon } from "@/components/invitation/FooterRibbon";
-import { GiftCard } from "@/components/invitation/GiftCard";
-import { GiftCatalog } from "@/components/invitation/GiftCatalog";
-import { GiftProofForm } from "@/components/invitation/GiftProofForm";
+import { GiftSection } from "@/components/invitation/GiftSection";
 import { InvitationShell } from "@/components/invitation/InvitationShell";
 import { PhotoWall } from "@/components/invitation/PhotoWall";
 import { Reveal } from "@/components/invitation/Reveal";
@@ -155,13 +153,13 @@ export default async function PublicEventPage({ params }: PageProps) {
           />
         </Reveal>
 
-        {/* El catálogo va antes de la mesa de regalos: cada artículo tiene su
-            botón «Comprar el regalo», que abre el QR dentro de la invitación.
-            Al cliente solo van los campos que se pintan: el `cloudinaryId` es un
-            identificador interno y no debe viajar en el payload. */}
-        {event.giftItems.length > 0 ? (
+        {/* Mesa de regalos: el QR del anfitrión y el catálogo viven en la misma
+            sección, así que el invitado elige un regalo o aporta un monto sin
+            salir de aquí. Al cliente solo van los campos que se pintan: el
+            `cloudinaryId` es un identificador interno y no debe viajar. */}
+        {event.giftQrUrl || event.giftItems.length > 0 ? (
           <Reveal>
-            <GiftCatalog
+            <GiftSection
               items={event.giftItems.map((item) => ({
                 id: item.id,
                 title: item.title,
@@ -172,27 +170,10 @@ export default async function PublicEventPage({ params }: PageProps) {
                 proofCount: item._count.proofs,
               }))}
               eventId={event.id}
-              giftQrUrl={event.giftQrUrl}
-              giftMessage={event.giftMessage}
-            />
-          </Reveal>
-        ) : null}
-
-        {event.giftQrUrl ? (
-          <Reveal>
-            <GiftCard
               eventTitle={event.title}
               giftQrUrl={event.giftQrUrl}
               giftMessage={event.giftMessage}
             />
-          </Reveal>
-        ) : null}
-
-        {/* El comprobante pertenece a la mesa de regalos: sin regalos no hay nada
-            que comprobar, así que el formulario solo aparece con la sección. */}
-        {event.giftQrUrl ? (
-          <Reveal>
-            <GiftProofForm eventId={event.id} />
           </Reveal>
         ) : null}
 

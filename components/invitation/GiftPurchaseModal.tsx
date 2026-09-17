@@ -18,7 +18,8 @@ export type PurchaseGift = {
 };
 
 type Props = {
-  item: PurchaseGift;
+  /** Regalo elegido, o `null` para quien solo quiere aportar un monto. */
+  item: PurchaseGift | null;
   eventId: string;
   giftQrUrl: string | null;
   giftMessage: string | null;
@@ -26,11 +27,12 @@ type Props = {
 };
 
 /**
- * Ventana de compra de un regalo del catálogo.
+ * Ventana de compra de la mesa de regalos.
  *
- * Reúne en un solo sitio las tres cosas que el invitado necesita: el QR de la
- * mesa de regalos (el mismo que subió el anfitrión), los datos de pago y el
- * formulario del comprobante, ya asociado a este artículo.
+ * Reúne en un solo sitio las tres cosas que el invitado necesita: el QR del
+ * anfitrión, los datos de pago y el formulario del comprobante. Sirve a las dos
+ * vías de la sección: elegir un artículo del catálogo (`item`) o aportar un
+ * monto libre (`item` = `null`).
  *
  * Se monta en `document.body` mediante un portal, igual que el visor de fotos:
  * dentro del `Reveal` que envuelve la sección, el `transform` de su animación
@@ -79,7 +81,9 @@ export function GiftPurchaseModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Comprar ${item.title}`}
+      aria-label={
+        item ? `Comprar ${item.title}` : "Aportar a la mesa de regalos"
+      }
       className="fixed inset-0 z-[70] flex items-end justify-center overscroll-contain bg-slate-950/70 backdrop-blur-sm sm:items-center sm:p-4"
     >
       {/* Solo se cierra con el botón: un toque fuera no debe borrar lo que el
@@ -87,20 +91,29 @@ export function GiftPurchaseModal({
       <div className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-slate-50 p-4 shadow-2xl sm:rounded-3xl">
         <div className="flex items-start justify-between gap-3 rounded-2xl bg-white p-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-              <Image
-                src={optimizedImageUrl(item.imageUrl, 200)}
-                alt={item.title}
-                fill
-                sizes="56px"
-                className="object-cover"
-              />
-            </div>
+            {item ? (
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                <Image
+                  src={optimizedImageUrl(item.imageUrl, 200)}
+                  alt={item.title}
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div
+                aria-hidden
+                className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-slate-100 text-2xl"
+              >
+                🎁
+              </div>
+            )}
             <div className="min-w-0">
               <h2 className="truncate text-base font-bold text-slate-900">
-                {item.title}
+                {item ? item.title : "Aporte libre"}
               </h2>
-              {item.priceCents !== null ? (
+              {item && item.priceCents !== null ? (
                 <p className="text-sm font-semibold text-brand-700">
                   {formatPrice(item.priceCents, item.currency)}
                 </p>
@@ -119,30 +132,39 @@ export function GiftPurchaseModal({
         </div>
 
         <div className="mt-3 space-y-3 rounded-2xl bg-white p-4">
-          <p className="text-sm font-semibold text-slate-800">¿Cómo pagarlo?</p>
-          <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-600">
-            <li>
-              Escanea el QR y paga
-              {item.priceCents !== null
-                ? ` ${formatPrice(item.priceCents, item.currency)}`
-                : " el monto que quieras"}
-              .
-            </li>
-            <li>Guarda la captura del comprobante.</li>
-            <li>Adjúntala abajo con tu nombre y el anfitrión la verá.</li>
-          </ol>
-
           {giftQrUrl ? (
-            <div className="relative mx-auto aspect-square w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3">
-              <Image
-                src={optimizedImageUrl(giftQrUrl, 600)}
-                alt="Código QR de la mesa de regalos"
-                fill
-                sizes="224px"
-                className="object-contain"
-              />
-            </div>
-          ) : null}
+            <>
+              <p className="text-sm font-semibold text-slate-800">
+                ¿Cómo pagarlo?
+              </p>
+              <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-600">
+                <li>
+                  Escanea el QR y paga
+                  {item && item.priceCents !== null
+                    ? ` ${formatPrice(item.priceCents, item.currency)}`
+                    : " el monto que quieras"}
+                  .
+                </li>
+                <li>Guarda la captura del comprobante.</li>
+                <li>Adjúntala abajo con tu nombre y el anfitrión la verá.</li>
+              </ol>
+
+              <div className="relative mx-auto aspect-square w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3">
+                <Image
+                  src={optimizedImageUrl(giftQrUrl, 600)}
+                  alt="Código QR de la mesa de regalos"
+                  fill
+                  sizes="224px"
+                  className="object-contain"
+                />
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-slate-600">
+              El anfitrión todavía no cargó su QR de pagos. Coordina con él cómo
+              entregarle tu regalo y adjunta aquí tu comprobante.
+            </p>
+          )}
 
           {giftMessage ? (
             <p className="whitespace-pre-line text-center text-xs text-slate-600">
@@ -152,7 +174,7 @@ export function GiftPurchaseModal({
         </div>
 
         <div className="mt-3">
-          <GiftProofForm eventId={eventId} giftItemId={item.id} />
+          <GiftProofForm eventId={eventId} giftItemId={item?.id} />
         </div>
       </div>
     </div>
