@@ -14,6 +14,9 @@ export type UploadSignature = {
   folder: string;
   signature: string;
   uploadUrl: string;
+  /** Formatos permitidos separados por coma (parámetro firmado `allowed_formats`). */
+  allowedFormats: string;
+  /** Tamaño máximo en bytes; viaja como `max_bytes` (parámetro firmado). */
   maxFileBytes: number;
 };
 
@@ -120,6 +123,11 @@ export async function uploadImageFile(
   formData.append("timestamp", String(signature.timestamp));
   formData.append("signature", signature.signature);
   formData.append("folder", signature.folder);
+  // Parámetros firmados: deben viajar con el mismo valor con el que se firmaron,
+  // o Cloudinary rechaza la petición por firma inválida. Aquí es donde Cloudinary
+  // hace cumplir el formato y el tamaño, no solo la validación del navegador.
+  formData.append("allowed_formats", signature.allowedFormats);
+  formData.append("max_bytes", String(signature.maxFileBytes));
 
   const response = await fetch(signature.uploadUrl, {
     method: "POST",

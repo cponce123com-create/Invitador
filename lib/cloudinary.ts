@@ -26,14 +26,28 @@ export function getCloudinaryCredentials(): CloudinaryCredentials {
 /**
  * Genera la firma para una subida directa desde el navegador.
  * El `api_secret` NUNCA sale del servidor: solo viaja la firma resultante.
+ *
+ * Además de la carpeta y el timestamp se firman `allowed_formats` y
+ * `max_bytes`. Cloudinary valida la firma contra los parámetros que recibe, así
+ * que estos dos solo se hacen cumplir si viajan en la petición: los mismos
+ * valores que se firman aquí deben enviarse en el `FormData` de `lib/upload.ts`.
  */
 export function createUploadSignature(params: {
   folder: string;
   timestamp: number;
+  /** Formatos permitidos separados por coma, como espera Cloudinary. */
+  allowedFormats: string;
+  /** Tamaño máximo del archivo en bytes. */
+  maxBytes: number;
 }): string {
   const { apiSecret } = getCloudinaryCredentials();
   return cloudinary.utils.api_sign_request(
-    { folder: params.folder, timestamp: params.timestamp },
+    {
+      folder: params.folder,
+      timestamp: params.timestamp,
+      allowed_formats: params.allowedFormats,
+      max_bytes: params.maxBytes,
+    },
     apiSecret,
   );
 }

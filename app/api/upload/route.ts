@@ -45,9 +45,14 @@ export async function POST() {
       apiKey,
       timestamp,
       folder,
-      signature: createUploadSignature({ folder, timestamp }),
+      signature: createUploadSignature({
+        folder,
+        timestamp,
+        allowedFormats: ALLOWED_UPLOAD_FORMATS.join(","),
+        maxBytes: MAX_UPLOAD_BYTES,
+      }),
       uploadUrl: buildUploadEndpoint(cloudName),
-      allowedFormats: ALLOWED_UPLOAD_FORMATS,
+      allowedFormats: ALLOWED_UPLOAD_FORMATS.join(","),
       maxFileBytes: MAX_UPLOAD_BYTES,
     });
   } catch (error) {
