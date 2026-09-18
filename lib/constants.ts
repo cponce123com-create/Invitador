@@ -110,6 +110,13 @@ export const DEFAULT_MAX_GUESTS_PER_RSVP = 3;
 export const MAX_GUESTS_PER_RSVP_LIMIT = 20;
 export const MAX_EVENT_PHOTOS = 30;
 
+/**
+ * Tope de nombres que el endpoint público de RSVP compara al buscar un posible
+ * duplicado. Acota la memoria y el trabajo por petición en eventos con
+ * muchísimos invitados; por encima de este número el aviso puede no dispararse.
+ */
+export const MAX_DUPLICATE_SCAN = 2000;
+
 /** Longitud máxima del texto que acompaña al QR de la mesa de regalos. */
 export const MAX_GIFT_MESSAGE = 300;
 
@@ -121,6 +128,24 @@ export const MAX_GIFT_ITEM_TITLE = 120;
 
 /** Longitud máxima de la descripción de un artículo del catálogo. */
 export const MAX_GIFT_ITEM_DESCRIPTION = 400;
+
+/**
+ * Precio máximo publicable en el catálogo, en céntimos.
+ *
+ * Deja margen dentro del rango `Int` de Postgres (2 147 483 647) y evita que un
+ * precio absurdo reviente el `create` con un error de base de datos (500) en
+ * lugar de rechazarse con un 422 limpio.
+ */
+export const MAX_GIFT_PRICE_CENTS = 999_999_999;
+
+/** Cuántos eventos puede tener un mismo anfitrión. */
+export const MAX_EVENTS_PER_HOST = 50;
+
+/** Cuántas fotos de galería puede acumular un anfitrión entre todos sus eventos. */
+export const MAX_PHOTOS_PER_HOST = 500;
+
+/** Cuántos artículos de catálogo puede acumular un anfitrión entre sus eventos. */
+export const MAX_GIFT_ITEMS_PER_HOST = 300;
 
 /**
  * Moneda con la que se publican los precios del catálogo (ISO 4217).

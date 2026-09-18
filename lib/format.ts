@@ -1,6 +1,7 @@
 import {
   DEFAULT_CURRENCY,
   EVENT_TIME_ZONE,
+  MAX_GIFT_PRICE_CENTS,
   type AttendanceStatusValue,
   type GuestRelationValue,
 } from "@/lib/constants";
@@ -220,7 +221,27 @@ export function parsePriceToCents(
 ): number | null {
   const trimmed = value?.trim();
   if (!trimmed || !PRICE_PATTERN.test(trimmed)) return null;
-  return Math.round(Number(trimmed) * 100);
+  const cents = Math.round(Number(trimmed) * 100);
+  // El precio ya se valida al entrar; este tope es la última red para que un
+  // valor fuera de rango nunca llegue a un `Int` de Postgres.
+  return cents > MAX_GIFT_PRICE_CENTS ? null : cents;
+}
+
+/**
+ * Motivo por el que un precio escrito a mano no es válido, o `null` si lo es
+ * (incluido el campo vacío: el precio es opcional).
+ *
+ * Devuelve el mensaje concreto, y no un booleano, para poder distinguir un
+ * formato mal escrito de un precio fuera de rango.
+ */
+export function priceInputError(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  if (!PRICE_PATTERN.test(trimmed)) return "Escribe un precio como 35 o 35.50";
+  if (Math.round(Number(trimmed) * 100) > MAX_GIFT_PRICE_CENTS) {
+    return `El precio no puede pasar de ${formatPrice(MAX_GIFT_PRICE_CENTS)}`;
+  }
+  return null;
 }
 
 /** Céntimos → precio listo para mostrar, ej: `S/ 35.50`. */

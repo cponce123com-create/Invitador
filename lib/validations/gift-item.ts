@@ -3,7 +3,7 @@ import {
   MAX_GIFT_ITEM_DESCRIPTION,
   MAX_GIFT_ITEM_TITLE,
 } from "@/lib/constants";
-import { parsePriceToCents } from "@/lib/format";
+import { priceInputError } from "@/lib/format";
 import { isHttpUrl } from "@/lib/urls";
 
 /**
@@ -26,10 +26,12 @@ const httpUrl = (message: string) =>
 const optionalPrice = z
   .string()
   .trim()
-  .refine(
-    (value) => value === "" || parsePriceToCents(value) !== null,
-    "Escribe un precio como 35 o 35.50",
-  )
+  .superRefine((value, ctx) => {
+    const message = priceInputError(value);
+    if (message) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+    }
+  })
   .optional();
 
 /**

@@ -4,6 +4,8 @@ import {
   emptyToNull,
   giftItemsBelongToHost,
   photosBelongToHost,
+  replacedSingleImageAssetIds,
+  singleImageAssetIds,
   toEventDate,
   toEventScalarData,
   toGiftItemData,
@@ -245,5 +247,69 @@ describe("giftItemsBelongToHost", () => {
   it("acepta un catálogo vacío o ausente", () => {
     expect(giftItemsBelongToHost("host-1", [])).toBe(true);
     expect(giftItemsBelongToHost("host-1", undefined)).toBe(true);
+  });
+});
+
+const cloudinary = (id: string) =>
+  `https://res.cloudinary.com/demo/image/upload/v1/${id}.jpg`;
+
+describe("singleImageAssetIds", () => {
+  it("deriva los public_id de las imágenes únicas del anfitrión", () => {
+    expect(
+      singleImageAssetIds("host-1", {
+        coverImageUrl: cloudinary("invitador/host-1/portada"),
+        locationImageUrl: cloudinary("invitador/host-1/lugar"),
+        giftQrUrl: null,
+        dressCodeImageUrl: cloudinary("invitador/host-1/vestimenta"),
+      }),
+    ).toEqual([
+      "invitador/host-1/portada",
+      "invitador/host-1/lugar",
+      "invitador/host-1/vestimenta",
+    ]);
+  });
+
+  it("descarta enlaces externos, assets ajenos y duplicados", () => {
+    expect(
+      singleImageAssetIds("host-1", {
+        coverImageUrl: "https://maps.app.goo.gl/abc",
+        locationImageUrl: cloudinary("invitador/host-2/ajena"),
+        giftQrUrl: cloudinary("invitador/host-1/qr"),
+        dressCodeImageUrl: cloudinary("invitador/host-1/qr"),
+      }),
+    ).toEqual(["invitador/host-1/qr"]);
+  });
+});
+
+describe("replacedSingleImageAssetIds", () => {
+  const previous = {
+    coverImageUrl: cloudinary("invitador/host-1/portada"),
+    locationImageUrl: cloudinary("invitador/host-1/lugar"),
+    giftQrUrl: null,
+    dressCodeImageUrl: null,
+  };
+
+  it("devuelve el asset que el PATCH reemplazó o quitó", () => {
+    expect(
+      replacedSingleImageAssetIds("host-1", previous, {
+        ...previous,
+        coverImageUrl: cloudinary("invitador/host-1/portada-nueva"),
+        locationImageUrl: null,
+      }),
+    ).toEqual(["invitador/host-1/portada", "invitador/host-1/lugar"]);
+  });
+
+  it("no borra una URL que sigue usándose aunque cambie de campo", () => {
+    expect(
+      replacedSingleImageAssetIds("host-1", previous, {
+        ...previous,
+        coverImageUrl: null,
+        locationImageUrl: previous.coverImageUrl,
+      }),
+    ).toEqual(["invitador/host-1/lugar"]);
+  });
+
+  it("no devuelve nada si no cambió ninguna imagen", () => {
+    expect(replacedSingleImageAssetIds("host-1", previous, previous)).toEqual([]);
   });
 });

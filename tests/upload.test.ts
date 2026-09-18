@@ -6,6 +6,7 @@ import {
   MAX_UPLOAD_BYTES,
   giftAssetFolder,
   isGiftAssetId,
+  uploadedAssetError,
 } from "@/lib/images";
 import { validateImageFile } from "@/lib/upload";
 
@@ -41,6 +42,31 @@ describe("validateImageFile", () => {
   it("respeta un tope distinto al del evento", () => {
     expect(validateImageFile(jpeg(2 * 1024 * 1024), 1024 * 1024)).toBe(
       '"foto.jpg" pesa más de 1 MB.',
+    );
+  });
+});
+
+describe("uploadedAssetError", () => {
+  it("acepta una imagen del formato y tamaño permitidos", () => {
+    expect(uploadedAssetError({ bytes: 1024, format: "jpg" })).toBeNull();
+    expect(
+      uploadedAssetError({ bytes: MAX_UPLOAD_BYTES, format: "webp" }),
+    ).toBeNull();
+  });
+
+  it("no distingue mayúsculas en el formato", () => {
+    expect(uploadedAssetError({ bytes: 1024, format: "PNG" })).toBeNull();
+  });
+
+  it("rechaza un formato no permitido", () => {
+    expect(uploadedAssetError({ bytes: 1024, format: "gif" })).toBe(
+      "El formato de la imagen no está permitido.",
+    );
+  });
+
+  it("rechaza un asset que pasa del tamaño máximo", () => {
+    expect(uploadedAssetError({ bytes: MAX_UPLOAD_BYTES + 1, format: "jpg" })).toBe(
+      "La imagen pesa más de 5 MB.",
     );
   });
 });
@@ -99,49 +125,27 @@ describe("createUploadSignature", () => {
     vi.unstubAllEnvs();
   });
 
-  it("firma folder, timestamp, allowed_formats y max_bytes", () => {
+  it("firma folder, timestamp y allowed_formats", () => {
     const folder = "invitador/host-1";
     const timestamp = 1_700_000_000;
     const allowedFormats = ALLOWED_UPLOAD_FORMATS.join(",");
 
-    const signature = createUploadSignature({
-      folder,
-      timestamp,
-      allowedFormats,
-      maxBytes: MAX_UPLOAD_BYTES,
-    });
+    const signature = createUploadSignature({ folder, timestamp, allowedFormats });
 
     expect(signature).toBe(
       expectedSignature({
         allowed_formats: allowedFormats,
         folder,
-        max_bytes: MAX_UPLOAD_BYTES,
         timestamp,
       }),
     );
   });
 
   it("cambia si cambia la lista de formatos permitidos", () => {
-    const base = {
-      folder: "invitador/host-1",
-      timestamp: 1_700_000_000,
-      maxBytes: MAX_UPLOAD_BYTES,
-    };
+    const base = { folder: "invitador/host-1", timestamp: 1_700_000_000 };
 
     expect(
       createUploadSignature({ ...base, allowedFormats: "jpg,png" }),
     ).not.toBe(createUploadSignature({ ...base, allowedFormats: "jpg" }));
-  });
-
-  it("cambia si cambia el tamaño máximo", () => {
-    const base = {
-      folder: "invitador/host-1",
-      timestamp: 1_700_000_000,
-      allowedFormats: "jpg,png",
-    };
-
-    expect(createUploadSignature({ ...base, maxBytes: 1024 })).not.toBe(
-      createUploadSignature({ ...base, maxBytes: 2048 }),
-    );
   });
 });

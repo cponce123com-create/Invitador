@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
-import { jsonError, readJson } from "@/lib/api";
+import { jsonError, jsonServerError, readJson } from "@/lib/api";
 import {
   buildUploadEndpoint,
   createUploadSignature,
   getCloudinaryCredentials,
 } from "@/lib/cloudinary";
 import { getClientIp } from "@/lib/http";
-import {
-  ALLOWED_UPLOAD_FORMATS,
-  giftAssetFolder,
-  MAX_UPLOAD_BYTES,
-} from "@/lib/images";
+import { ALLOWED_UPLOAD_FORMATS, giftAssetFolder } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { checkGiftRateLimit } from "@/lib/rate-limit";
 
@@ -23,7 +19,8 @@ export const runtime = "nodejs";
  * Es un endpoint PÚBLICO (no hay sesión: cualquiera con el link puede subir su
  * comprobante), así que se limita por IP, solo firma para eventos activos y
  * acota la carpeta al evento. El endpoint que guarda el comprobante rechaza
- * cualquier asset que no venga de esa carpeta.
+ * cualquier asset que no venga de esa carpeta y vuelve a comprobar su formato y
+ * tamaño contra Cloudinary.
  */
 export async function POST(request: Request) {
   const limit = await checkGiftRateLimit(`upload:${getClientIp(request)}`);
@@ -53,27 +50,28 @@ export async function POST(request: Request) {
     const { cloudName, apiKey } = getCloudinaryCredentials();
     const timestamp = Math.round(Date.now() / 1000);
     const folder = giftAssetFolder(event.id);
+    const allowedFormats = ALLOWED_UPLOAD_FORMATS.join(",");
 
     return NextResponse.json({
       cloudName,
       apiKey,
       timestamp,
       folder,
-      signature: createUploadSignature({
-        folder,
-        timestamp,
-        allowedFormats: ALLOWED_UPLOAD_FORMATS.join(","),
-        maxBytes: MAX_UPLOAD_BYTES,
-      }),
+      signature: createUploadSignature({ folder, timestamp, allowedFormats }),
       uploadUrl: buildUploadEndpoint(cloudName),
-      allowedFormats: ALLOWED_UPLOAD_FORMATS.join(","),
-      maxFileBytes: MAX_UPLOAD_BYTES,
+      allowedFormats,
     });
   } catch (error) {
-    console.error("[upload/gift] Cloudinary no está configurado", error);
-    return jsonError(
-      "La subida de comprobantes no está configurada en el servidor.",
-      503,
+    return jsonServerError(
+      request,
+      "upload/gift",
+      "Cloudinary no está configurado",
+      error,
+      {
+        status: 503,
+        userMessage:
+          "La subida de comprobantes no está configurada en el servidor.",
+      },
     );
   }
 }

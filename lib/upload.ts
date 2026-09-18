@@ -16,8 +16,6 @@ export type UploadSignature = {
   uploadUrl: string;
   /** Formatos permitidos separados por coma (parámetro firmado `allowed_formats`). */
   allowedFormats: string;
-  /** Tamaño máximo en bytes; viaja como `max_bytes` (parámetro firmado). */
-  maxFileBytes: number;
 };
 
 /** Imagen recién subida a Cloudinary. */
@@ -42,6 +40,10 @@ type CloudinaryUploadResult = {
 /**
  * Mensaje de error si el archivo no sirve como imagen del evento, o `null` si
  * pasa la validación.
+ *
+ * Es solo la primera barrera (evita subir lo que ya sabemos que Cloudinary va a
+ * rechazar o lo que pasa del tope). El servidor vuelve a comprobar formato y
+ * tamaño contra el asset real antes de guardarlo.
  */
 export function validateImageFile(
   file: ImageCandidate,
@@ -111,7 +113,7 @@ export function requestGiftUploadSignature(
 
 /**
  * Sube una imagen directamente a Cloudinary (navegador → Cloudinary, no pasa
- * por Render) y devuelve su URL pública y su identificador.
+ * por React) y devuelve su URL pública y su identificador.
  */
 export async function uploadImageFile(
   file: File,
@@ -123,11 +125,10 @@ export async function uploadImageFile(
   formData.append("timestamp", String(signature.timestamp));
   formData.append("signature", signature.signature);
   formData.append("folder", signature.folder);
-  // Parámetros firmados: deben viajar con el mismo valor con el que se firmaron,
-  // o Cloudinary rechaza la petición por firma inválida. Aquí es donde Cloudinary
-  // hace cumplir el formato y el tamaño, no solo la validación del navegador.
+  // Parámetro firmado: debe viajar con el mismo valor con el que se firmó, o
+  // Cloudinary rechaza la petición por firma inválida. Aquí es donde Cloudinary
+  // hace cumplir el formato de la imagen.
   formData.append("allowed_formats", signature.allowedFormats);
-  formData.append("max_bytes", String(signature.maxFileBytes));
 
   const response = await fetch(signature.uploadUrl, {
     method: "POST",

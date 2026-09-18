@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
+import { jsonError, jsonServerError, readJson, zodErrorResponse } from "@/lib/api";
 import { isCrossOriginRequest } from "@/lib/http";
 import { hashPassword } from "@/lib/password";
 import { isUniqueConstraintError, prisma } from "@/lib/prisma";
@@ -63,7 +63,12 @@ export async function POST(request: Request) {
     if (isUniqueConstraintError(error)) {
       return jsonError("Ese email ya está registrado.", 409);
     }
-    console.error("[admin/users] No se pudo crear el usuario", error);
-    return jsonError("No pudimos crear el usuario. Intenta de nuevo.", 500);
+    return jsonServerError(
+      request,
+      "admin/users",
+      "No se pudo crear el usuario",
+      error,
+      { userMessage: "No pudimos crear el usuario. Intenta de nuevo." },
+    );
   }
 }

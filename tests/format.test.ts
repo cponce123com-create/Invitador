@@ -141,6 +141,13 @@ describe("parsePriceToCents", () => {
     expect(parsePriceToCents("-10")).toBeNull();
     expect(parsePriceToCents("S/ 35")).toBeNull();
   });
+
+  it("acota el precio al máximo publicable", () => {
+    // Justo en el tope pasa; un céntimo más se descarta (nunca llega a `Int`).
+    expect(parsePriceToCents("9999999.99")).toBe(999_999_999);
+    expect(parsePriceToCents("10000000")).toBeNull();
+    expect(parsePriceToCents("99999999.99")).toBeNull();
+  });
 });
 
 describe("centsToPriceInput", () => {

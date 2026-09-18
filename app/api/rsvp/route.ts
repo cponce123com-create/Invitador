@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
+import { MAX_DUPLICATE_SCAN } from "@/lib/constants";
 import { emptyToNull } from "@/lib/events";
 import { isWallClockPast } from "@/lib/format";
 import { getClientIp } from "@/lib/http";
@@ -76,16 +77,22 @@ export async function POST(request: Request) {
     const existing = await prisma.rsvp.findMany({
       where: { eventId: event.id },
       select: { mainGuestName: true },
+      orderBy: { createdAt: "asc" },
+      take: MAX_DUPLICATE_SCAN,
     });
-    const duplicates = findSimilarNames(
-      values.mainGuestName,
-      existing.map((rsvp) => rsvp.mainGuestName),
-    );
-    if (duplicates.length > 0) {
+    const hasDuplicate =
+      findSimilarNames(
+        values.mainGuestName,
+        existing.map((rsvp) => rsvp.mainGuestName),
+      ).length > 0;
+    if (hasDuplicate) {
+      // Se avisa de que HAY un parecido, nunca de a quién pertenece: el enlace
+      // es público y devolver nombres filtraría la lista de invitados a
+      // cualquiera que pruebe nombres distintos.
       return NextResponse.json(
         {
           error: "Ya existe una confirmación con un nombre muy parecido.",
-          duplicates,
+          duplicate: true,
         },
         { status: 409 },
       );

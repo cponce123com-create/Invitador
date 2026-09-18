@@ -34,3 +34,16 @@ export function isSerializationError(error: unknown): boolean {
     error.code === "P2034"
   );
 }
+
+/**
+ * `true` si el error es una violación de clave foránea (código P2003).
+ * Ocurre, por ejemplo, cuando el formulario de evento manda un
+ * `backgroundTemplateId` que ya no existe: sin esto, un id ajeno o caducado
+ * terminaría en un 500 en vez de en un 400.
+ */
+export function isForeignKeyConstraintError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2003"
+  );
+}

@@ -470,6 +470,21 @@ describe("catálogo de regalos", () => {
     ).toBe(false);
   });
 
+  it("rechaza un precio por encima del tope con un mensaje claro", () => {
+    const parsed = eventFormSchema.safeParse({
+      ...eventBase,
+      giftItems: [{ ...regalo, price: "10000000" }],
+    });
+
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      const messages = parsed.error.issues
+        .map((issue) => issue.message)
+        .join(" | ");
+      expect(messages).toContain("El precio no puede pasar de");
+    }
+  });
+
   it("limita el nombre, la descripción y el número de regalos", () => {
     expect(
       eventFormSchema.safeParse({

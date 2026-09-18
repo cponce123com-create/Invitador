@@ -5,7 +5,11 @@ import {
   type AttendanceStatusValue,
 } from "@/lib/constants";
 import { parsePriceToCents, parseWallClockInput } from "@/lib/format";
-import { isGiftAssetId, isHostAssetId } from "@/lib/images";
+import {
+  cloudinaryPublicIdFromUrl,
+  isGiftAssetId,
+  isHostAssetId,
+} from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { buildEventSlug } from "@/lib/slug";
 import type { EventFormValues } from "@/lib/validations/event";
@@ -228,6 +232,73 @@ export async function syncGiftItems(
       removable.map((item) => deleteCloudinaryImage(item.cloudinaryId)),
     );
   }
+}
+
+/** Campos de `Event` que guardan la URL de una imagen única (no de la galería). */
+type SingleImageFields = {
+  coverImageUrl: string | null;
+  locationImageUrl: string | null;
+  giftQrUrl: string | null;
+  dressCodeImageUrl: string | null;
+};
+
+/** URLs de las imágenes únicas de un evento, en orden estable. */
+function singleImageUrls(event: SingleImageFields): (string | null)[] {
+  return [
+    event.coverImageUrl,
+    event.locationImageUrl,
+    event.giftQrUrl,
+    event.dressCodeImageUrl,
+  ];
+}
+
+/**
+ * `public_id` de un conjunto de URLs, sin repetir y filtrado a la carpeta de
+ * Cloudinary del anfitrión. Un enlace externo (que el anfitrión pegó a mano) o
+ * un asset ajeno se descartan: nunca se borra algo que no sea suyo.
+ */
+function hostAssetIds(hostId: string, urls: (string | null)[]): string[] {
+  const ids = new Set<string>();
+  for (const url of urls) {
+    const publicId = cloudinaryPublicIdFromUrl(url);
+    if (publicId && isHostAssetId(hostId, publicId)) ids.add(publicId);
+  }
+  return [...ids];
+}
+
+/**
+ * `public_id` de las imágenes únicas del evento (portada, lugar, QR,
+ * vestimenta) que viven en la carpeta de Cloudinary del anfitrión.
+ *
+ * Esas columnas guardan la URL, no el `public_id`, así que se deriva de la URL
+ * para poder borrar el asset al eliminar el evento.
+ */
+export function singleImageAssetIds(
+  hostId: string,
+  event: SingleImageFields,
+): string[] {
+  return hostAssetIds(hostId, singleImageUrls(event));
+}
+
+/**
+ * `public_id` de las imágenes únicas que un PATCH reemplazó o quitó y que el
+ * evento ya no usa.
+ *
+ * Se comparan las URLs anteriores con las nuevas: una URL que sigue presente
+ * (por ejemplo, movida a otro campo) no se borra.
+ */
+export function replacedSingleImageAssetIds(
+  hostId: string,
+  previous: SingleImageFields,
+  next: SingleImageFields,
+): string[] {
+  const kept = new Set(
+    singleImageUrls(next).filter((url): url is string => Boolean(url)),
+  );
+  const replaced = singleImageUrls(previous).filter(
+    (url): url is string => url !== null && !kept.has(url),
+  );
+  return hostAssetIds(hostId, replaced);
 }
 
 /**

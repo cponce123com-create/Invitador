@@ -42,7 +42,6 @@ export function PhotoUploader({ value, onChange, coverUrl, onPickCover, maxPhoto
     try {
       // 1. El backend firma la subida: el api_secret nunca llega al navegador.
       const signature = await requestUploadSignature();
-      const maxBytes = signature.maxFileBytes || MAX_UPLOAD_BYTES;
       const uploaded: UploadedImage[] = [];
 
       for (const file of Array.from(files)) {
@@ -51,7 +50,7 @@ export function PhotoUploader({ value, onChange, coverUrl, onPickCover, maxPhoto
           break;
         }
 
-        const invalidFile = validateImageFile(file, maxBytes);
+        const invalidFile = validateImageFile(file, MAX_UPLOAD_BYTES);
         if (invalidFile) {
           setUploadError(invalidFile);
           continue;

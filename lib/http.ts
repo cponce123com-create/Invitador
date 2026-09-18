@@ -64,3 +64,23 @@ export function isCrossOriginRequest(request: Request): boolean {
     return true;
   }
 }
+
+/** Cabecera que transporta el identificador de correlación de la petición. */
+export const REQUEST_ID_HEADER = "x-request-id";
+
+/** Un id de correlación seguro para logs: sin saltos ni caracteres raros. */
+const SAFE_REQUEST_ID = /^[A-Za-z0-9._-]{1,100}$/;
+
+/**
+ * Identificador de correlación de la petición.
+ *
+ * Si un proxy ya lo añadió (`x-request-id`) y tiene un formato seguro, se
+ * reutiliza para no romper la cadena; si no, se genera uno nuevo. Se usa en los
+ * logs y en las respuestas de error para poder cruzar lo que reporta el usuario
+ * con la línea del servidor.
+ */
+export function getRequestId(request: Request): string {
+  const incoming = request.headers.get(REQUEST_ID_HEADER)?.trim();
+  if (incoming && SAFE_REQUEST_ID.test(incoming)) return incoming;
+  return crypto.randomUUID();
+}

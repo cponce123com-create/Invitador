@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
+import { deleteCloudinaryImage, fetchUploadedImageInfo } from "@/lib/cloudinary";
 import { emptyToNull } from "@/lib/events";
 import { getClientIp } from "@/lib/http";
-import { isGiftAssetId } from "@/lib/images";
+import { isGiftAssetId, uploadedAssetError } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { checkGiftRateLimit } from "@/lib/rate-limit";
 import { giftProofRequestSchema } from "@/lib/validations/gift-proof";
@@ -46,6 +47,22 @@ export async function POST(request: Request) {
   // enlaza el asset de otro evento (o de otra cuenta) como si fuera suyo.
   if (!isGiftAssetId(event.id, values.cloudinaryId)) {
     return jsonError("El comprobante no es válido", 400);
+  }
+
+  // La firma no puede imponer el tamaño (Cloudinary no tiene ese parámetro),
+  // así que se consulta el asset real y se valida aquí. Es la única barrera
+  // del servidor en un endpoint público: el navegador no es de fiar.
+  const asset = await fetchUploadedImageInfo(values.cloudinaryId);
+  if (!asset) {
+    return jsonError("No pudimos verificar el comprobante. Vuelve a subirlo.", 400);
+  }
+
+  const assetError = uploadedAssetError(asset);
+  if (assetError) {
+    // El asset ya se subió: si se rechaza aquí queda huérfano, así que se borra
+    // para no dejar basura ni gastar cuota de Cloudinary.
+    await deleteCloudinaryImage(values.cloudinaryId);
+    return jsonError(assetError, 400);
   }
 
   // Si el invitado eligió un regalo del catálogo, se comprueba que sea de ESTE

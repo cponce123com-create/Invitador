@@ -38,6 +38,62 @@ export function isHostAssetId(hostId: string, cloudinaryId: string): boolean {
   return cloudinaryId.startsWith(prefix) && cloudinaryId.length > prefix.length;
 }
 
+/** Host de entrega de Cloudinary (de donde cuelgan las URLs guardadas). */
+const CLOUDINARY_DELIVERY_HOST = "res.cloudinary.com";
+/** Marca del tipo de recurso y del endpoint de subida dentro de la URL. */
+const CLOUDINARY_UPLOAD_MARKER = "/image/upload/";
+
+/**
+ * Extrae el `public_id` de una URL de entrega de Cloudinary, o `null` si la URL
+ * no es de Cloudinary o no tiene el formato esperado (por ejemplo, un enlace
+ * externo que el anfitrión pegó a mano).
+ *
+ * Hace falta porque las imágenes únicas del evento (portada, lugar, QR,
+ * vestimenta) guardan la URL, no el `public_id`: para poder borrar el asset
+ * cuando se reemplaza o se elimina el evento hay que recuperarlo de la URL.
+ */
+export function cloudinaryPublicIdFromUrl(
+  url: string | null | undefined,
+): string | null {
+  const trimmed = url?.trim();
+  if (!trimmed) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+
+  if (parsed.hostname !== CLOUDINARY_DELIVERY_HOST) return null;
+
+  const markerIndex = parsed.pathname.indexOf(CLOUDINARY_UPLOAD_MARKER);
+  if (markerIndex === -1) return null;
+
+  const segments = parsed.pathname
+    .slice(markerIndex + CLOUDINARY_UPLOAD_MARKER.length)
+    .split("/")
+    .filter((segment) => segment.length > 0);
+  if (segments.length === 0) return null;
+
+  // Descarta transformaciones y el segmento de versión (`v123`): el `public_id`
+  // empieza justo después.
+  const versionIndex = segments.findIndex((segment) => /^v\d+$/.test(segment));
+  const assetSegments =
+    versionIndex >= 0 ? segments.slice(versionIndex + 1) : segments;
+  if (assetSegments.length === 0) return null;
+
+  // El último segmento incluye la extensión del archivo.
+  const lastIndex = assetSegments.length - 1;
+  const dotIndex = assetSegments[lastIndex].lastIndexOf(".");
+  if (dotIndex > 0) {
+    assetSegments[lastIndex] = assetSegments[lastIndex].slice(0, dotIndex);
+  }
+
+  const publicId = assetSegments.join("/");
+  return publicId.length > 0 ? publicId : null;
+}
+
 /** 5 MB: suficiente para fotos de celular y mantiene la página liviana. */
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -48,6 +104,36 @@ export const ALLOWED_UPLOAD_MIME_TYPES = [
   "image/png",
   "image/webp",
 ] as const;
+
+/** Datos mínimos que Cloudinary reporta de un asset ya subido. */
+export type UploadedAssetInfo = {
+  bytes: number;
+  format: string;
+};
+
+/**
+ * Mensaje de error si el asset subido no tiene un formato permitido o pasa del
+ * tamaño máximo; `null` si es correcto.
+ *
+ * La firma solo hace cumplir `allowed_formats`: Cloudinary no tiene un
+ * parámetro de tamaño, así que el tope de bytes se comprueba aquí, contra lo
+ * que Cloudinary reporta del asset real, no contra lo que diga el navegador.
+ */
+export function uploadedAssetError(info: UploadedAssetInfo): string | null {
+  if (
+    !ALLOWED_UPLOAD_FORMATS.includes(
+      info.format.toLowerCase() as (typeof ALLOWED_UPLOAD_FORMATS)[number],
+    )
+  ) {
+    return "El formato de la imagen no está permitido.";
+  }
+
+  if (info.bytes > MAX_UPLOAD_BYTES) {
+    return `La imagen pesa más de ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))} MB.`;
+  }
+
+  return null;
+}
 
 /**
  * Inserta transformaciones de Cloudinary en una URL ya subida.

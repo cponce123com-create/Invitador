@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getClientIpFromHeaders, isCrossOriginRequest } from "@/lib/http";
+import {
+  getClientIpFromHeaders,
+  getRequestId,
+  isCrossOriginRequest,
+} from "@/lib/http";
 
 describe("getClientIpFromHeaders", () => {
   it("toma el último hop de x-forwarded-for (el que añade el proxy)", () => {
@@ -100,5 +104,27 @@ describe("isCrossOriginRequest", () => {
       isCrossOriginRequest(request({ origin: "null", host: "invitador.com" })),
     ).toBe(true);
     expect(isCrossOriginRequest(request({}))).toBe(false);
+  });
+});
+
+describe("getRequestId", () => {
+  function request(headers: Record<string, string> = {}) {
+    return new Request("http://localhost/api/events", { headers });
+  }
+
+  it("reutiliza un x-request-id entrante con formato seguro", () => {
+    expect(getRequestId(request({ "x-request-id": "abc-123_DEF.4" }))).toBe(
+      "abc-123_DEF.4",
+    );
+  });
+
+  it("genera un id nuevo cuando no llega ninguno", () => {
+    expect(getRequestId(request())).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("descarta un id con caracteres inseguros y genera uno nuevo", () => {
+    const id = getRequestId(request({ "x-request-id": "con espacios" }));
+    expect(id).not.toBe("con espacios");
+    expect(id).toMatch(/^[0-9a-f-]{36}$/);
   });
 });

@@ -20,7 +20,7 @@ import {
 } from "@/lib/ui";
 import { createRsvpSchema, type RsvpFormValues } from "@/lib/validations/rsvp";
 
-type Props = {
+export type RsvpFormProps = {
   eventId: string;
   maxGuestsPerRsvp: number;
 };
@@ -34,7 +34,7 @@ const emptyValues = (eventId: string): RsvpFormValues => ({
   additionalGuests: [],
 });
 
-export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
+export function RsvpForm({ eventId, maxGuestsPerRsvp }: RsvpFormProps) {
   // El esquema depende del tope de acompañantes configurado en el evento.
   const schema = useMemo(() => createRsvpSchema(maxGuestsPerRsvp), [maxGuestsPerRsvp]);
 
@@ -42,9 +42,10 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
   const successRef = useRef<HTMLDivElement | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<RsvpFormValues["attendance"] | null>(null);
-  // Nombres ya registrados que se parecen al que se está enviando. Mientras no
-  // se confirme, la confirmación no se crea.
-  const [duplicateNames, setDuplicateNames] = useState<string[] | null>(null);
+  // El servidor avisó de que ya hay una confirmación con un nombre parecido.
+  // Deliberadamente NO se recibe a quién pertenece: el enlace es público y
+  // devolver nombres filtraría la lista de invitados.
+  const [duplicateDetected, setDuplicateDetected] = useState(false);
   const pendingValues = useRef<RsvpFormValues | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -93,9 +94,9 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
 
       // El servidor detectó un posible duplicado: se pide confirmación y se
       // recuerda lo que la persona escribió para poder reenviarlo tal cual.
-      if (response.status === 409 && Array.isArray(payload?.duplicates)) {
+      if (response.status === 409 && payload?.duplicate === true) {
         pendingValues.current = values;
-        setDuplicateNames(payload.duplicates as string[]);
+        setDuplicateDetected(true);
         return;
       }
 
@@ -104,7 +105,7 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
         return;
       }
 
-      setDuplicateNames(null);
+      setDuplicateDetected(false);
       pendingValues.current = null;
       setConfirmed(values.attendance);
       reset(emptyValues(eventId));
@@ -123,7 +124,7 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
   }
 
   function dismissDuplicate() {
-    setDuplicateNames(null);
+    setDuplicateDetected(false);
     pendingValues.current = null;
   }
 
@@ -266,19 +267,14 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
         {errors.message ? <p role="alert" className={errorClass}>{errors.message.message}</p> : null}
       </div>
 
-      {duplicateNames ? (
+      {duplicateDetected ? (
         <div
           role="alert"
           className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900"
         >
           <p className="font-semibold">
-            Ya existe una confirmación con un nombre muy parecido:
+            Ya existe una confirmación con un nombre parecido al tuyo.
           </p>
-          <ul className="list-disc space-y-0.5 pl-5">
-            {duplicateNames.map((name, index) => (
-              <li key={`${name}-${index}`}>{name}</li>
-            ))}
-          </ul>
           <p>
             Si eres otra persona, puedes enviar tu confirmación igual. Si te
             equivocaste al escribir, corrige tu nombre arriba.

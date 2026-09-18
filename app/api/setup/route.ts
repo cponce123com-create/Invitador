@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
+import { jsonError, jsonServerError, readJson, zodErrorResponse } from "@/lib/api";
 import { getClientIp, isCrossOriginRequest } from "@/lib/http";
 import { hashPassword } from "@/lib/password";
 import {
@@ -95,7 +95,12 @@ export async function POST(request: Request) {
     if (isSerializationError(error)) {
       return jsonError("Ya existe un administrador. Inicia sesión.", 409);
     }
-    console.error("[setup] No se pudo crear el super admin", error);
-    return jsonError("No pudimos crear la cuenta. Intenta de nuevo.", 500);
+    return jsonServerError(
+      request,
+      "setup",
+      "No se pudo crear el super admin",
+      error,
+      { userMessage: "No pudimos crear la cuenta. Intenta de nuevo." },
+    );
   }
 }

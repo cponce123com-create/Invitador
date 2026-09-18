@@ -5,6 +5,7 @@ import {
   SETUP_RATE_LIMIT,
   UPLOAD_RATE_LIMIT,
 } from "@/lib/constants";
+import { logError } from "@/lib/logger";
 
 export type RateLimitResult = {
   success: boolean;
@@ -149,6 +150,36 @@ const UPLOAD_POLICY: UpstashPolicy = {
 // Un limitador por prefijo: cada política tiene su propia cuota en Redis.
 const upstashLimiters = new Map<string, UpstashLimiter>();
 let upstashFailed = false;
+let warnedMissingUpstash = false;
+
+/**
+ * `true` si hay credenciales de Upstash.
+ *
+ * En producción el rate limiting DEBE usar Upstash: con varias instancias los
+ * contadores en memoria no se comparten y cada instancia multiplica el cupo
+ * efectivo. Sin credenciales, el fallback en memoria es una degradación de
+ * seguridad, no una opción inocua.
+ */
+export function isUpstashConfigured(): boolean {
+  return Boolean(
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+  );
+}
+
+/** Avisa UNA vez si en producción se va a usar el limitador en memoria. */
+function warnIfUpstashMissing(): void {
+  if (warnedMissingUpstash || isUpstashConfigured()) return;
+  warnedMissingUpstash = true;
+  if (process.env.NODE_ENV === "production") {
+    logError(
+      "rate-limit",
+      "Faltan UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN en producción. " +
+        "Se usará un contador EN MEMORIA por instancia: con varias instancias el " +
+        "cupo se multiplica y el rate limiting deja de ser fiable. Configura " +
+        "Upstash en el servicio.",
+    );
+  }
+}
 
 async function getUpstashLimiter(
   policy: UpstashPolicy,
@@ -156,7 +187,8 @@ async function getUpstashLimiter(
   const cached = upstashLimiters.get(policy.prefix);
   if (cached) return cached;
   if (upstashFailed) return null;
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  if (!isUpstashConfigured()) {
+    warnIfUpstashMissing();
     return null;
   }
 
@@ -181,7 +213,9 @@ async function getUpstashLimiter(
     upstashLimiters.set(policy.prefix, wrapped);
     return wrapped;
   } catch (error) {
-    console.error("[rate-limit] No se pudo inicializar Upstash; se usa el limitador en memoria.", error);
+    logError("rate-limit", "No se pudo inicializar Upstash; se usa el limitador en memoria.", {
+      error,
+    });
     upstashFailed = true;
     return null;
   }
@@ -198,7 +232,9 @@ async function checkRateLimit(
     try {
       return await limiter.limit(identifier);
     } catch (error) {
-      console.error("[rate-limit] Falló Upstash; se usa el limitador en memoria.", error);
+      logError("rate-limit", "Falló Upstash; se usa el limitador en memoria.", {
+        error,
+      });
     }
   }
   return fallback.check(identifier);

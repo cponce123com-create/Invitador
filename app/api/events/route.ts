@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { jsonError, readJson, zodErrorResponse } from "@/lib/api";
+import { jsonError, jsonServerError, readJson, zodErrorResponse } from "@/lib/api";
 import {
   createUniqueEventSlug,
   giftItemsBelongToHost,
@@ -8,7 +8,8 @@ import {
   toGiftItemData,
 } from "@/lib/events";
 import { isCrossOriginRequest } from "@/lib/http";
-import { prisma } from "@/lib/prisma";
+import { isForeignKeyConstraintError, prisma } from "@/lib/prisma";
+import { getHostUsage, hostQuotaError } from "@/lib/quotas";
 import { getCurrentHost } from "@/lib/session";
 import { eventFormSchema } from "@/lib/validations/event";
 
@@ -66,29 +67,48 @@ export async function POST(request: Request) {
     return jsonError("Alguna foto del catálogo no pertenece a tu cuenta", 400);
   }
 
+  // Cuota por anfitrión: los topes por evento no evitan que una sola cuenta
+  // acumule eventos, fotos y regalos sin límite.
+  const usage = await getHostUsage(host.id);
+  const quotaError = hostQuotaError(usage, {
+    events: 1,
+    photos: (values.photos ?? []).length,
+    giftItems: (values.giftItems ?? []).length,
+  });
+  if (quotaError) return jsonError(quotaError, 403);
+
   const slug = await createUniqueEventSlug(values.title);
 
-  const event = await prisma.event.create({
-    data: {
-      ...toEventScalarData(values),
-      slug,
-      hostId: host.id,
-      photos: {
-        create: (values.photos ?? []).map((photo, index) => ({
-          url: photo.url,
-          cloudinaryId: photo.cloudinaryId,
-          order: index,
-        })),
+  try {
+    const event = await prisma.event.create({
+      data: {
+        ...toEventScalarData(values),
+        slug,
+        hostId: host.id,
+        photos: {
+          create: (values.photos ?? []).map((photo, index) => ({
+            url: photo.url,
+            cloudinaryId: photo.cloudinaryId,
+            order: index,
+          })),
+        },
+        giftItems: {
+          create: (values.giftItems ?? []).map((item, index) => ({
+            ...toGiftItemData(item),
+            order: index,
+          })),
+        },
       },
-      giftItems: {
-        create: (values.giftItems ?? []).map((item, index) => ({
-          ...toGiftItemData(item),
-          order: index,
-        })),
-      },
-    },
-    include: { photos: { orderBy: { order: "asc" } } },
-  });
+      include: { photos: { orderBy: { order: "asc" } } },
+    });
 
-  return NextResponse.json({ event }, { status: 201 });
+    return NextResponse.json({ event }, { status: 201 });
+  } catch (error) {
+    // Un `backgroundTemplateId` inexistente viola la clave foránea: es un dato
+    // del formulario, no un fallo del servidor.
+    if (isForeignKeyConstraintError(error)) {
+      return jsonError("El fondo seleccionado no es válido.", 400);
+    }
+    return jsonServerError(request, "events", "No se pudo crear el evento", error);
+  }
 }
