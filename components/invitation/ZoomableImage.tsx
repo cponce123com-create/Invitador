@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { optimizedImageUrl } from "@/lib/images";
 import { cn } from "@/lib/ui";
-import { Lightbox } from "./Lightbox";
+import { Lightbox } from "./LazyLightbox";
 
 /** El visor de una sola foto no navega: no hay índice al que saltar. */
 const noop = () => {};

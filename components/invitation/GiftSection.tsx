@@ -1,12 +1,33 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { optimizedImageUrl } from "@/lib/images";
 import { cardClass, primaryButtonClass, secondaryButtonClass } from "@/lib/ui";
-import { GiftPurchaseModal } from "./GiftPurchaseModal";
+import type { GiftPurchaseModalProps } from "./GiftPurchaseModal";
 import { ZoomableImage } from "./ZoomableImage";
+
+/** Fondo opaco mientras baja el chunk de la ventana de compra. */
+function GiftModalFallback() {
+  return (
+    <div
+      aria-hidden
+      className="fixed inset-0 z-[70] bg-slate-950/70 backdrop-blur-sm"
+    />
+  );
+}
+
+/**
+ * La ventana de compra trae consigo el formulario del comprobante (y con él
+ * `react-hook-form` + `zod`), así que se carga solo al pulsar «Comprar el
+ * regalo» o «Aportar un monto».
+ */
+const GiftPurchaseModal = dynamic<GiftPurchaseModalProps>(
+  () => import("./GiftPurchaseModal").then((mod) => mod.GiftPurchaseModal),
+  { ssr: false, loading: () => <GiftModalFallback /> },
+);
 
 /** Un regalo del catálogo tal como lo pinta la invitación pública. */
 export type GiftSectionItem = {

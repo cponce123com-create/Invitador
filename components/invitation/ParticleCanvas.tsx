@@ -163,7 +163,16 @@ export function ParticleCanvas({
     };
 
     resize();
-    if (!pausedRef.current) start();
+
+    // El primer arranque se difiere dos fotogramas: así el hilo principal
+    // atiende primero el render inicial (y el LCP) y solo después empieza a
+    // animar. Con movimiento reducido el efecto ya retornó antes.
+    let startRaf = 0;
+    if (!pausedRef.current) {
+      startRaf = requestAnimationFrame(() => {
+        startRaf = requestAnimationFrame(start);
+      });
+    }
 
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
@@ -175,6 +184,7 @@ export function ParticleCanvas({
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
+      cancelAnimationFrame(startRaf);
       stop();
       controlsRef.current = null;
       observer.disconnect();

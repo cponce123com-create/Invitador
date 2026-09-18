@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { optimizedImageUrl } from "@/lib/images";
 import { cn } from "@/lib/ui";
-import { Lightbox } from "./Lightbox";
+import { Lightbox } from "./LazyLightbox";
 import { Reveal } from "./Reveal";
 
 type Photo = { id: string; url: string };

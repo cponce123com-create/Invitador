@@ -17,7 +17,7 @@ export type PurchaseGift = {
   imageUrl: string;
 };
 
-type Props = {
+export type GiftPurchaseModalProps = {
   /** Regalo elegido, o `null` para quien solo quiere aportar un monto. */
   item: PurchaseGift | null;
   eventId: string;
@@ -45,7 +45,7 @@ export function GiftPurchaseModal({
   giftQrUrl,
   giftMessage,
   onClose,
-}: Props) {
+}: GiftPurchaseModalProps) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
 
   // Mientras la ventana tapa la invitación, el fondo ambiental se detiene.
