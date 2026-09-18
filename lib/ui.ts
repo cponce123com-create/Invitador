@@ -27,3 +27,12 @@ export const dangerButtonClass =
 
 export const ghostButtonClass =
   "inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900";
+
+/**
+ * Botón de "agregar" a pantalla completa, con borde discontinuo y color de
+ * marca. Es una llamada a la acción deliberadamente llamativa: en el formulario
+ * de RSVP el alta de acompañantes es fácil de pasar por alto, así que el botón
+ * ocupa todo el ancho y contrasta con el resto de campos.
+ */
+export const addGuestButtonClass =
+  "inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 px-4 py-3.5 text-sm font-semibold text-brand-700 transition hover:border-brand-400 hover:bg-brand-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400";

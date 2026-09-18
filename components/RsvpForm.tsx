@@ -5,9 +5,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { AttendanceSelector } from "@/components/AttendanceSelector";
 import { GuestRow } from "@/components/GuestRow";
+import { GuestSlots } from "@/components/GuestSlots";
 import { useConfetti } from "@/components/invitation/ConfettiProvider";
 import { ATTENDANCE_LABELS } from "@/lib/constants";
 import {
+  addGuestButtonClass,
   cardClass,
   errorClass,
   helpClass,
@@ -208,32 +210,19 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
       </div>
 
       {attendance === "SI" ? (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900">
-                ¿Vienes con alguien más?
-              </h3>
-              <p className={helpClass}>
-                Puedes agregar hasta {maxGuestsPerRsvp} acompañante
-                {maxGuestsPerRsvp === 1 ? "" : "s"}.
-              </p>
-            </div>
-            <button
-              type="button"
-              className={secondaryButtonClass}
-              disabled={!canAddGuest}
-              onClick={() => append({ name: "", relation: "FAMILIAR" })}
-            >
-              + Agregar acompañante
-            </button>
+        <div className="space-y-4 rounded-2xl border border-brand-100 bg-brand-50/50 p-4">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">
+              ¿Vienes con alguien más?
+            </h3>
+            <p className={helpClass}>
+              Agrega a tus acompañantes para reservarles su lugar.
+            </p>
           </div>
 
-          {fields.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
-              Sin acompañantes por ahora.
-            </p>
-          ) : (
+          <GuestSlots used={fields.length} total={maxGuestsPerRsvp} />
+
+          {fields.length > 0 ? (
             <div className="space-y-3">
               {fields.map((field, index) => (
                 <GuestRow
@@ -245,7 +234,17 @@ export function RsvpForm({ eventId, maxGuestsPerRsvp }: Props) {
                 />
               ))}
             </div>
-          )}
+          ) : null}
+
+          <button
+            type="button"
+            className={addGuestButtonClass}
+            disabled={!canAddGuest}
+            onClick={() => append({ name: "", relation: "FAMILIAR" })}
+          >
+            <span aria-hidden className="text-base leading-none">+</span>
+            {canAddGuest ? "Agregar acompañante" : "Llegaste al máximo de acompañantes"}
+          </button>
 
           {errors.additionalGuests?.message ? (
             <p role="alert" className={errorClass}>{errors.additionalGuests.message}</p>

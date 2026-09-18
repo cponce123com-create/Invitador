@@ -5,8 +5,10 @@ import { useId, useMemo, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { AttendanceSelector } from "@/components/AttendanceSelector";
 import { GuestRow } from "@/components/GuestRow";
+import { GuestSlots } from "@/components/GuestSlots";
 import type { AttendanceStatusValue, GuestRelationValue } from "@/lib/constants";
 import {
+  addGuestButtonClass,
   errorClass,
   helpClass,
   inputClass,
@@ -169,30 +171,17 @@ export function RsvpEditForm({
       </div>
 
       {attendance === "SI" ? (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900">Acompañantes</h3>
-              <p className={helpClass}>
-                Hasta {maxGuestsPerRsvp} acompañante{maxGuestsPerRsvp === 1 ? "" : "s"} por
-                confirmación.
-              </p>
-            </div>
-            <button
-              type="button"
-              className={secondaryButtonClass}
-              disabled={!canAddGuest}
-              onClick={() => append({ name: "", relation: "FAMILIAR" })}
-            >
-              + Agregar acompañante
-            </button>
+        <div className="space-y-4 rounded-2xl border border-brand-100 bg-brand-50/50 p-4">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">Acompañantes</h3>
+            <p className={helpClass}>
+              Agrega o quita acompañantes de esta confirmación.
+            </p>
           </div>
 
-          {fields.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-5 text-center text-sm text-slate-500">
-              Sin acompañantes.
-            </p>
-          ) : (
+          <GuestSlots used={fields.length} total={maxGuestsPerRsvp} />
+
+          {fields.length > 0 ? (
             <div className="space-y-3">
               {fields.map((field, index) => (
                 <GuestRow
@@ -204,7 +193,17 @@ export function RsvpEditForm({
                 />
               ))}
             </div>
-          )}
+          ) : null}
+
+          <button
+            type="button"
+            className={addGuestButtonClass}
+            disabled={!canAddGuest}
+            onClick={() => append({ name: "", relation: "FAMILIAR" })}
+          >
+            <span aria-hidden className="text-base leading-none">+</span>
+            {canAddGuest ? "Agregar acompañante" : "Llegaste al máximo de acompañantes"}
+          </button>
 
           {errors.additionalGuests?.message ? (
             <p role="alert" className={errorClass}>{errors.additionalGuests.message}</p>
